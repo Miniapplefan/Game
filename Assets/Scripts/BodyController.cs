@@ -15,6 +15,12 @@ public class BodyController : MonoBehaviour
     List<SystemModel> systemControllers;
     public Rigidbody rb;
     public GameObject head;
+    public GameObject aimCam;
+
+    RaycastHit hit;
+    public LayerMask aimMask;
+    public Transform weaponAimPoint;
+    public Transform torsoAimPoint;
 
     float currentSelfXrotation;
     float currentSelfYrotation;
@@ -111,6 +117,24 @@ public class BodyController : MonoBehaviour
         //}
     }
 
+    private void GetAimPoint()
+    {
+        Vector3 torso = aimCam.transform.position + 20 * aimCam.transform.forward;
+        if (Physics.Raycast(aimCam.transform.position, aimCam.transform.forward, out hit, Mathf.Infinity, aimMask))
+        {
+            //Debug.DrawRay(head.transform.position, head.transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
+            //Debug.Log(hit.distance);
+            //weaponAimPoint.position = Vector3.Lerp(weaponAimPoint.position, hit.point, 0.2f);
+            weaponAimPoint.position = hit.point;
+        }
+        else
+        {
+           //weaponAimPoint.position = Vector3.Lerp(weaponAimPoint.position, torso, 0.2f);
+           weaponAimPoint.position = torso;
+        }
+        torsoAimPoint.position = torso;
+    }
+
     #endregion
 
     private void ExecutePhysicsBasedInputs()
@@ -128,6 +152,7 @@ public class BodyController : MonoBehaviour
     void Update()
     {
         DoRotation();
+        GetAimPoint();
     }
 
     private void FixedUpdate()
