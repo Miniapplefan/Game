@@ -11,6 +11,7 @@ public class BodyController : MonoBehaviour
 
     LegsModel legs;
     SensorsModel sensors;
+    WeaponsModel weapons;
 
     List<SystemModel> systemControllers;
     public Rigidbody rb;
@@ -57,14 +58,16 @@ public class BodyController : MonoBehaviour
             switch (sys)
             {
                 case BodyInfo.systemID.Legs:
-                    models.Add(new LegsModel(so_initialBodyStats.rawSystemStartLevels[i], rb));
                     legs = new LegsModel(so_initialBodyStats.rawSystemStartLevels[i], rb);
+                    models.Add(legs);
                     break;
                 case BodyInfo.systemID.Sensors:
-                    models.Add(new SensorsModel(so_initialBodyStats.rawSystemStartLevels[i], head));
                     sensors = new SensorsModel(so_initialBodyStats.rawSystemStartLevels[i], head);
+                    models.Add(sensors);
                     break;
                 case BodyInfo.systemID.Weapons:
+                    weapons = new WeaponsModel(so_initialBodyStats.rawSystemStartLevels[i]);
+                    models.Add(weapons);
                     break;
                 case BodyInfo.systemID.Shields:
                     break;
@@ -100,6 +103,21 @@ public class BodyController : MonoBehaviour
     public void MoveRight()
     {
         legs.ExecuteRight();
+    }
+
+    public void FireWeapon1()
+    {
+        weapons.ExecuteWeapon1();
+    }
+
+    public void FireWeapon2()
+    {
+        weapons.ExecuteWeapon2();
+    }
+
+    public void FireWeapon3()
+    {
+        weapons.ExecuteWeapon3();
     }
 
     private void DoRotation()
@@ -146,6 +164,10 @@ public class BodyController : MonoBehaviour
             if (input.getLeft()) MoveLeft();
             if (input.getRight()) MoveRight();
         }
+
+        if (input.getFire1()) FireWeapon1();
+        if (input.getFire2()) FireWeapon2();
+        if (input.getFire3()) FireWeapon3();
     }
 
     // Update is called once per frame

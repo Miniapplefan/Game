@@ -10,4 +10,8 @@ public interface InputController
     public bool getRight();
 
     public Vector2 getHeadRotation();
+
+    public bool getFire1();
+    public bool getFire2();
+    public bool getFire3();
 }

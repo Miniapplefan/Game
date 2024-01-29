@@ -18,6 +18,10 @@ public class PlayerController : MonoBehaviour, InputController
     private float mouseXrotation;
     private float mouseYrotation;
 
+    public bool pressingFire1;
+    public bool pressingFire2;
+    public bool pressingFire3;
+
 
     // Start is called before the first frame update
     void Start()
@@ -61,6 +65,21 @@ public class PlayerController : MonoBehaviour, InputController
         return new Vector2(mouseXrotation, mouseYrotation);
     }
 
+    public bool getFire1()
+    {
+        return pressingFire1;
+    }
+
+    public bool getFire2()
+    {
+        return pressingFire2;
+    }
+
+    public bool getFire3()
+    {
+        return pressingFire3;
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -68,5 +87,9 @@ public class PlayerController : MonoBehaviour, InputController
         pressingBackward = Input.GetKey(backwardKey);
         pressingLeft = Input.GetKey(leftKey);
         pressingRight = Input.GetKey(rightKey);
+
+        pressingFire1 = Input.GetButtonDown("Fire1");
+        pressingFire2 = Input.GetButtonDown("Fire2");
+        pressingFire3 = Input.GetButtonDown("Fire3");
     }
 }
