@@ -11,6 +11,8 @@ public class BodyInfo : ScriptableObject
         Sensors,
         Shields,
         Weapons,
+        Cooling,
+        Head,
     };
 
     public systemID[] rawSystems;

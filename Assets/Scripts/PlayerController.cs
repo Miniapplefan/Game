@@ -18,6 +18,8 @@ public class PlayerController : MonoBehaviour, InputController
     private float mouseXrotation;
     private float mouseYrotation;
 
+    public float scrollSensitivity = 0.1f;
+
     public bool pressingFire1;
     public bool pressingFire2;
     public bool pressingFire3;
@@ -80,6 +82,21 @@ public class PlayerController : MonoBehaviour, InputController
         return pressingFire3;
     }
 
+    public bool getScroll()
+    {
+        // Check if mouse wheel is scrolled
+        float scrollWheelInput = Input.GetAxis("Mouse ScrollWheel");
+
+        // If scrollWheelInput is not within the sensitivity threshold, return
+        if (Mathf.Abs(scrollWheelInput) < scrollSensitivity)
+        {
+            return false;
+        }
+
+        // Set didScroll to true
+        return true;
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -88,8 +105,8 @@ public class PlayerController : MonoBehaviour, InputController
         pressingLeft = Input.GetKey(leftKey);
         pressingRight = Input.GetKey(rightKey);
 
-        pressingFire1 = Input.GetButtonDown("Fire1");
-        pressingFire2 = Input.GetButtonDown("Fire2");
-        pressingFire3 = Input.GetButtonDown("Fire3");
+        pressingFire1 = Input.GetMouseButton(0);
+        pressingFire2 = Input.GetMouseButton(1);
+        pressingFire3 = Input.GetMouseButton(2);
     }
 }

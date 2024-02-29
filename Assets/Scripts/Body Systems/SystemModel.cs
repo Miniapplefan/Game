@@ -38,7 +38,7 @@ public abstract class SystemModel
         currentLevelWithoutDamage = Mathf.Clamp(currentLevelWithoutDamage + amount, currentLevelWithoutDamage, maxLevel);
     }
 
-    public void Damage(int amount)
+    public virtual void Damage(int amount)
     {
         currentLevel = Mathf.Clamp(currentLevel - amount, 0, currentLevel);
     }

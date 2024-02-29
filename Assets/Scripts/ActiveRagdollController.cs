@@ -23,6 +23,7 @@ public class ActiveRagdollController : MonoBehaviour
     public Transform RagdollLeftFoot;
     public Transform RagdollRightArm;
     public Transform RagdollRightWeapon;
+    public Transform AnimatedHead;
     public Rigidbody RagdollHead;
     public Rigidbody RagdollRightArmRb;
     public Transform AnimatedRightArm;
@@ -46,8 +47,8 @@ public class ActiveRagdollController : MonoBehaviour
         foreach (Rigidbody rb in Rigidbodies)
         {
             rb.solverIterations = 70;
-            //rb.solverVelocityIterations = 2;
-            //rb.maxAngularVelocity = _maxAngularVelocity;
+            //rb.solverVelocityIterations = 20;
+            //rb.maxAngularVelocity = 20;
         }
     }
 
@@ -55,15 +56,15 @@ public class ActiveRagdollController : MonoBehaviour
     void FixedUpdate()
     {
         UpdateJointTargets();
-        //RagdollLeftFoot = AnimatedLeftFoot;
-        //RagdollRightFoot = AnimatedRightFoot;
+        RagdollLeftFoot = AnimatedLeftFoot;
+        RagdollRightFoot = AnimatedRightFoot;
     }
 
     private void LateUpdate()
     {
-        if (RagdollRightArmRb.velocity.magnitude < 2f)
+        if (RagdollRightArmRb.velocity.magnitude < 0.5f)
         {
-            float speed = (1f / RagdollRightArmRb.velocity.magnitude) * 2f;
+            float speed = (1f / RagdollRightArmRb.velocity.magnitude);
             Vector3 direction = target.transform.position - RagdollRightArm.transform.position;
             Quaternion toRotation = Quaternion.LookRotation(direction, transform.up);
             //AnimatedRightArm.transform.rotation = toRotation;
@@ -82,7 +83,7 @@ public class ActiveRagdollController : MonoBehaviour
             //RagdollRightWeapon.transform.rotation = t;
 
         }
-
+        //RagdollHead.transform.rotation = AnimatedHead.rotation;
     }
 
     private void UpdateJointTargets()

@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 122c620b5ebea443dba77dcc7c7d5f58, type: 3}
   m_Name: PlayerStartBodyInfo
   m_EditorClassIdentifier: 
-  rawSystems: 000000000100000003000000
-  rawSystemStartLevels: 010000000100000003000000
+  rawSystems: 0400000000000000010000000300000005000000
+  rawSystemStartLevels: 0100000001000000010000000300000001000000
