@@ -13,6 +13,7 @@ public class BodyInfo : ScriptableObject
         Weapons,
         Cooling,
         Head,
+        Siphon,
     };
 
     public systemID[] rawSystems;

@@ -8,11 +8,13 @@ public class PlayerController : MonoBehaviour, InputController
     public KeyCode backwardKey;
     public KeyCode leftKey;
     public KeyCode rightKey;
+    public KeyCode siphonKey;
 
     private bool pressingForward;
     private bool pressingBackward;
     private bool pressingLeft;
     private bool pressingRight;
+    private bool pressingSiphon;
 
     public float sensitivity;
     private float mouseXrotation;
@@ -97,6 +99,11 @@ public class PlayerController : MonoBehaviour, InputController
         return true;
     }
 
+    public bool getSiphon()
+    {
+        return pressingSiphon;
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -108,5 +115,7 @@ public class PlayerController : MonoBehaviour, InputController
         pressingFire1 = Input.GetMouseButton(0);
         pressingFire2 = Input.GetMouseButton(1);
         pressingFire3 = Input.GetMouseButton(2);
+
+        pressingSiphon = Input.GetKey(siphonKey);
     }
 }

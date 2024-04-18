@@ -17,4 +17,6 @@ public interface InputController
 
     public bool getScroll();
 
+    public bool getSiphon();
+
 }

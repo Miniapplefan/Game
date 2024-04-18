@@ -27,6 +27,8 @@ public class BodyController : MonoBehaviour
     //public GunSelectorTest gun1;
     //public GunSelectorTest gun2;
     //public GunSelectorTest gun3;
+    SiphonModel siphon;
+    public Transform siphonHead;
 
     List<SystemModel> systemControllers;
     public Rigidbody rb;
@@ -99,6 +101,11 @@ public class BodyController : MonoBehaviour
                     head = new HeadModel(so_initialBodyStats.rawSystemStartLevels[i]);
                     models.Add(head);
                     Debug.Log("Head added");
+                    break;
+                case BodyInfo.systemID.Siphon:
+                    siphon = new SiphonModel(so_initialBodyStats.rawSystemStartLevels[i], siphonHead);
+                    models.Add(siphon);
+                    Debug.Log("Siphon added");
                     break;
                 default:
                     break;
@@ -308,6 +315,18 @@ public class BodyController : MonoBehaviour
         coolingGauge.transform.localScale = coolingGaugeScaleCache * Mathf.Clamp(((cooling.currentHeat + 0.01f) / cooling.getMaxHeat()),0, 1f);
     }
 
+    private void doSiphoning()
+    {
+        if (input.getSiphon())
+        {
+            siphon.ToggleSiphon();
+        }
+        else
+        {
+            siphon.NotSiphoning();
+        }
+    }
+
     //public void StartCooling()
     //{
     //    if (decrementCoroutine == null)
@@ -333,5 +352,6 @@ public class BodyController : MonoBehaviour
         ExecutePhysicsBasedInputs();
         legs.DoMoveDeacceleration();
         doCooling();
+        doSiphoning();
     }
 }
