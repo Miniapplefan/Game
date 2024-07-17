@@ -6,7 +6,7 @@ public class SiphonTarget : MonoBehaviour
 {
     public float dollarsPerSecond = 1;
     public float dollarAmount = 100;
-    float dollarsLeft;
+    public float dollarsLeft;
     public SiphonModel siphoner;
 
     public Material targeted;
@@ -23,14 +23,14 @@ public class SiphonTarget : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(siphoner != null)
+        if (siphoner != null)
         {
-            if(dollarsLeft > 0)
+            if (dollarsLeft > 0)
             {
                 siphoner.addDollars(Time.deltaTime * dollarsPerSecond * siphoner.getSiphoningRate());
                 dollarsLeft -= Time.deltaTime * dollarsPerSecond * siphoner.getSiphoningRate();
                 gameObject.transform.localScale = scaleCache * (dollarsLeft / dollarAmount);
-                Debug.Log(siphoner.dollars);
+                //Debug.Log(siphoner.dollars);
             }
         }
     }

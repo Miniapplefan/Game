@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using Lean.Pool;
+//using Lean.Pool;
 using UnityEngine;
+using UnityEngine.Pool;
 
 public class Gun : MonoBehaviour
 {
@@ -11,6 +12,11 @@ public class Gun : MonoBehaviour
     private ParticleSystem shootSystem;
     private float lastShootTime;
     private GameObject weaponSlotLocation;
+    private ObjectPool<TrailRenderer> TrailPool;
+    public bool isPowered;
+    private float chargeTimeLeftCache;
+    public bool isFiringBurst = false;
+
 
     public void SetParent(GameObject parent, Rigidbody weap)
     {
@@ -28,6 +34,7 @@ public class Gun : MonoBehaviour
     void Start()
     {
         lastShootTime = 0;
+        TrailPool = new ObjectPool<TrailRenderer>(CreateTrail);
 
         GameObject model = Instantiate(gunData.ModelPrefab);
         model.transform.SetParent(weaponSlotLocation.transform, false);
@@ -37,61 +44,101 @@ public class Gun : MonoBehaviour
         shootSystem = model.GetComponentInChildren<ParticleSystem>();
     }
 
+    public bool isCharged()
+    {
+        return chargeTimeLeftCache <= 0;
+    }
+
     public bool Shoot()
     {
-        //Debug.Log(Model.transform.position);
-        if (Time.time > gunData.shootConfig.FireRate + lastShootTime)
+        if (chargeTimeLeftCache <= 0)
         {
-            lastShootTime = Time.time;
-            shootSystem.Play();
-            Vector3 shootDirection = shootSystem.transform.forward
-                + new Vector3(
-                    Random.Range(
-                        -gunData.shootConfig.Spread.x,
-                        gunData.shootConfig.Spread.x
-                    ),
-                    Random.Range(
-                        -gunData.shootConfig.Spread.y,
-                        gunData.shootConfig.Spread.y
-                    ),
-                    Random.Range(
-                        -gunData.shootConfig.Spread.z,
-                        gunData.shootConfig.Spread.z
-                    )
-                );
-            shootDirection.Normalize();
-            weapon.AddRelativeForce(weapon.transform.up * gunData.shootConfig.recoil, ForceMode.Impulse);
-
-            if (Physics.Raycast(
-                    shootSystem.transform.position,
-                    shootDirection,
-                    out RaycastHit hit,
-                    float.MaxValue,
-                    gunData.shootConfig.HitMask
-                ))
+            // Debug.Log("Done charging");
+            if (gunData.shootConfig.isBurst)
             {
-                StartCoroutine(
-                    PlayTrail(
-                        shootSystem.transform.position,
-                        hit.point,
-                        hit
-                    )
-                );
-                ManageHit(hit);
+                StartCoroutine(ShootBurst());
             }
             else
             {
-                StartCoroutine(
-                    PlayTrail(
-                        shootSystem.transform.position,
-                        shootSystem.transform.position + (shootDirection * gunData.trailConfig.MissDistance),
-                        new RaycastHit()
-                    )
-                );
+                SingleShot();
             }
+            chargeTimeLeftCache = gunData.shootConfig.fireRate;
             return true;
         }
-        return false;
+        else
+        {
+            return false;
+        }
+    }
+
+    private IEnumerator ShootBurst()
+    {
+        for (int i = 0; i < gunData.shootConfig.burst_numShots; i++)
+        {
+            isFiringBurst = true;
+            if (SingleShot())
+            {
+                yield return new WaitForSeconds(gunData.shootConfig.burst_delayBetweenShots);
+            }
+            else
+            {
+                break;
+            }
+        }
+        isFiringBurst = false;
+    }
+
+    public bool SingleShot()
+    {
+        //lastShootTime = Time.time;
+        chargeTimeLeftCache = gunData.shootConfig.fireRate;
+        shootSystem.Play();
+        Vector3 shootDirection = shootSystem.transform.forward
+            + new Vector3(
+                Random.Range(
+                    -gunData.shootConfig.Spread.x,
+                    gunData.shootConfig.Spread.x
+                ),
+                Random.Range(
+                    -gunData.shootConfig.Spread.y,
+                    gunData.shootConfig.Spread.y
+                ),
+                Random.Range(
+                    -gunData.shootConfig.Spread.z,
+                    gunData.shootConfig.Spread.z
+                )
+            );
+        shootDirection.Normalize();
+        weapon.AddRelativeForce(weapon.transform.up * gunData.shootConfig.recoil, ForceMode.Impulse);
+
+        if (Physics.Raycast(
+                shootSystem.transform.position,
+                shootDirection,
+                out RaycastHit hit,
+                float.MaxValue,
+                gunData.shootConfig.HitMask
+            ))
+        {
+            StartCoroutine(
+                PlayTrail(
+                    shootSystem.transform.position,
+                    hit.point,
+                    hit
+                )
+            );
+            ManageHit(hit);
+        }
+        else
+        {
+            StartCoroutine(
+                PlayTrail(
+                    shootSystem.transform.position,
+                    shootSystem.transform.position + (shootDirection * gunData.trailConfig.MissDistance),
+                    new RaycastHit()
+                )
+            );
+        }
+        return true;
     }
 
     private void ManageHit(RaycastHit hit)
@@ -101,25 +148,25 @@ public class Gun : MonoBehaviour
 
         if (hitRb != null)
         {
-            Debug.Log("hit rb");
+            //Debug.Log("hit rb");
             Vector3 impulse = shootSystem.transform.forward * gunData.shootConfig.impactForce;
             hitRb.AddForce(impulse, ForceMode.Impulse);
         }
 
-        if(limb != null)
+        if (limb != null)
         {
-            Debug.Log("hit limb");
+            //Debug.Log("hit limb");
             limb.TakeDamage(new DamageInfo(gunData.shootConfig.heatPerShot));
         }
     }
 
     private IEnumerator PlayTrail(Vector3 StartPoint, Vector3 EndPoint, RaycastHit Hit)
     {
-        //TrailRenderer instance = TrailPool.Get();
-        //instance.gameObject.SetActive(true);
-        //instance.transform.position = StartPoint;
-        TrailRenderer instance = LeanPool.Spawn(CreateTrail());
+        TrailRenderer instance = TrailPool.Get();
+        instance.gameObject.SetActive(true);
         instance.transform.position = StartPoint;
+        // TrailRenderer instance = LeanPool.Spawn(CreateTrail());
+        // instance.transform.position = StartPoint;
         yield return null; // avoid position carry-over from last frame if reused
 
         instance.emitting = true;
@@ -155,8 +202,8 @@ public class Gun : MonoBehaviour
         yield return null;
         instance.emitting = false;
         instance.gameObject.SetActive(false);
-        //TrailPool.Release(instance);
-        LeanPool.Despawn(instance);
+        TrailPool.Release(instance);
+        //LeanPool.Despawn(instance);
     }
 
     private TrailRenderer CreateTrail()
@@ -173,5 +220,14 @@ public class Gun : MonoBehaviour
         trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
         return trail;
+    }
+
+    private void Update()
+    {
+        //Debug.Log(chargeTimeLeftCache);
+        if (isPowered && chargeTimeLeftCache > 0)
+        {
+            chargeTimeLeftCache -= Time.deltaTime;
+        }
     }
 }

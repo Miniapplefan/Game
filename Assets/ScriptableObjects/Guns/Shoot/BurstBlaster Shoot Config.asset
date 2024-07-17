@@ -15,9 +15,12 @@ MonoBehaviour:
   powerRequired: 2
   HitMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 576
   Spread: {x: 0, y: 0, z: 0}
-  FireRate: 0.05
-  recoil: 30
+  isBurst: 1
+  burst_numShots: 3
+  burst_delayBetweenShots: 0.2
+  fireRate: 1
+  recoil: 50
   impactForce: 400
-  heatPerShot: 2
+  heatPerShot: 1

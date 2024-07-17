@@ -12,9 +12,12 @@ public class CoolingModel : SystemModel
 
     public bool isOverheated = false;
     public bool delayElapsed = false;
-    private float coolingStartDelay = 1;
-    private float coolingStartDelayTemp = 1;
-    private float coolingAmountMultiplier = 2f;
+    private float coolingStartDelay = 0.1f;
+    private float coolingStartDelayTemp = 0;
+    private float coolingAmountMultiplier = 0.2f;
+    private float coolingAmountMultiplierPassive = 0.1f;
+    private float coolingAmountMultiplierOverheated = 3f;
+
 
     public delegate void CoolingEventHandler();
     public event CoolingEventHandler RaiseIncreasedHeat;
@@ -38,12 +41,17 @@ public class CoolingModel : SystemModel
 
     public float getMaxHeat()
     {
-        return currentLevel * maxHeatMultiplier;
+        return currentLevelWithoutDamage * maxHeatMultiplier;
     }
 
     public float getCoolingAmount()
     {
         return currentLevel * coolingAmountMultiplier;
+    }
+
+    public float getPassiveCoolingAmount()
+    {
+        return currentLevelWithoutDamage * coolingAmountMultiplierPassive;
     }
 
     public void IncreaseHeat(object e, float amount)
@@ -55,8 +63,8 @@ public class CoolingModel : SystemModel
             if (currentHeat >= getMaxHeat())
             {
                 Debug.Log("Overheated!");
-                RaiseOverheated?.Invoke();
                 isOverheated = true;
+                RaiseOverheated?.Invoke();
             }
         }
         RaiseIncreasedHeat?.Invoke();
@@ -64,13 +72,26 @@ public class CoolingModel : SystemModel
 
     private void DecreaseCoolingStartDelay()
     {
-        if(coolingStartDelayTemp > 0)
+        if (coolingStartDelayTemp > 0)
         {
             coolingStartDelayTemp -= Time.deltaTime;
         }
         else
         {
             delayElapsed = true;
+        }
+    }
+
+    public void PassiveCooldown()
+    {
+        if (currentHeat > 0)
+        {
+            currentHeat = Mathf.Clamp(currentHeat -= getPassiveCoolingAmount() * Time.deltaTime, 0, getMaxHeat());
+        }
+        if (currentHeat <= 0)
+        {
+            RaiseCooledDownFromOverheat?.Invoke();
+            isOverheated = false;
         }
     }
 
@@ -81,6 +102,7 @@ public class CoolingModel : SystemModel
             if (currentHeat > 0)
             {
                 currentHeat = Mathf.Clamp(currentHeat -= getCoolingAmount() * Time.deltaTime, 0, getMaxHeat());
+                //Debug.Log("Normal Cooldown");
             }
             else
             {
@@ -91,6 +113,20 @@ public class CoolingModel : SystemModel
         else
         {
             DecreaseCoolingStartDelay();
+        }
+    }
+
+    public void CooldownOverheated()
+    {
+        if (currentHeat > 0)
+        {
+            currentHeat = Mathf.Clamp(currentHeat -= (coolingAmountMultiplierOverheated * currentLevelWithoutDamage) * Time.deltaTime, 0, getMaxHeat());
+            //Debug.Log("Overheat Cooldown");
+        }
+        else
+        {
+            RaiseCooledDownFromOverheat?.Invoke();
+            isOverheated = false;
         }
     }
 
