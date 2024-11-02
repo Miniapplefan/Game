@@ -4,18 +4,19 @@ using UnityEngine;
 
 public class DamageInfo
 {
-    public float amount;
-    public Limb limb;
-    public bool BypassShields { get; set; } = false;
-    public float ChanceToStartFire { get; set; } = 0.0f;
+	public float amount;
+	public float impactForce;
+	public Limb limb;
+	public bool BypassShields { get; set; } = false;
+	public float ChanceToStartFire { get; set; } = 0.0f;
 
-    public DamageInfo(float amount)
-    {
-        this.amount = amount;
-    }
+	public DamageInfo(float amount)
+	{
+		this.amount = amount;
+	}
 }
 
 public interface IDamageable
 {
-    void TakeDamage(DamageInfo i);
+	void TakeDamage(DamageInfo i);
 }

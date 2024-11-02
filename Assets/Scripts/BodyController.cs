@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using static BodyInfo;
 using static Limb;
 
@@ -12,10 +13,19 @@ public class BodyController : MonoBehaviour
 
 	public InputController input;
 
+	bool isAI = false;
+
+	bool isDead = false;
+
 	CoolingModel cooling;
+
+	HeatContainer heatContainer;
 	private Coroutine decrementCoroutine = null;
 	public GameObject coolingGauge;
 	Vector3 coolingGaugeScaleCache;
+
+	public GameObject taggingGauge;
+	Vector3 taggingGaugeScaleCache;
 
 	HeadModel head;
 
@@ -39,6 +49,18 @@ public class BodyController : MonoBehaviour
 	public GameObject headObject;
 	public GameObject aimCam;
 
+	public ConfigurableJoint upperTorsoJoint;
+	public ConfigurableJoint middleTorsoJoint;
+
+	public ConfigurableJoint upperRightArmJoint;
+
+	private JointDrive tempJoint;
+
+	public MultiAimConstraint upperTorsoMac;
+	public MultiAimConstraint lowerTorsoMac;
+
+	public Transform taggingTarget;
+
 	RaycastHit hit;
 	public LayerMask aimMask;
 	public Transform weaponAimPoint;
@@ -57,10 +79,13 @@ public class BodyController : MonoBehaviour
 	{
 		//so_initialBodyStats = (BodyInfo)Resources.Load<ScriptableObject>("PlayerStartBodyInfo");
 		systemControllers = InitSystems();
+		heatContainer = GetComponent<HeatContainer>();
+		heatContainer.coolingModel = cooling;
 		SubscribeSystemEvents();
-		bodyState.Init(systemControllers);
+		bodyState.Init(systemControllers, heatContainer);
 		rb = GetComponent<Rigidbody>();
 		bodyColliders = GetComponentsInChildren<Collider>();
+		tempJoint = new JointDrive();
 
 		//InputController can be either a player or AI. We check if it's a PlayerController and
 		//if it isn't we make it an AI
@@ -72,9 +97,11 @@ public class BodyController : MonoBehaviour
 		else
 		{
 			input = GetComponent<AIController>();
+			isAI = true;
 		}
 
 		coolingGaugeScaleCache = coolingGauge.transform.localScale;
+		taggingGaugeScaleCache = taggingGauge.transform.localScale;
 	}
 
 	List<SystemModel> InitSystems()
@@ -127,13 +154,18 @@ public class BodyController : MonoBehaviour
 
 	void SubscribeSystemEvents()
 	{
-		weapons.RaiseFiredWeapon += cooling.IncreaseHeat;
+		//weapons.RaiseFiredWeapon += heatContainer.IncreaseHeat;
 
-		cooling.RaiseIncreasedHeat += StopCooling;
-		cooling.RaiseOverheated += weapons.OnCoolingSystemOverheat;
+		heatContainer.OnOverheated += () => cooling.SetOverheated(true);
+
+		//cooling.RaiseIncreasedHeat += StopCooling;
+
+		heatContainer.OnOverheated += weapons.OnCoolingSystemOverheat;
+		//cooling.RaiseOverheated += weapons.OnCoolingSystemOverheat;
 		cooling.RaiseCooledDownFromOverheat += weapons.OnCoolingSystemCooledOff;
 
-		cooling.RaiseOverheated += legs.OnCoolingSystemOverheat;
+		heatContainer.OnOverheated += legs.OnCoolingSystemOverheat;
+		//cooling.RaiseOverheated += legs.OnCoolingSystemOverheat;
 		cooling.RaiseCooledDownFromOverheat += legs.OnCoolingSystemCooledOff;
 
 
@@ -147,13 +179,16 @@ public class BodyController : MonoBehaviour
 
 	public void HandleDamage(DamageInfo i)
 	{
+		legs.HandleTagging(i.limb, i.impactForce);
+		weapons.HandleDisruption(i.limb);
 		if (cooling.isOverheated)
 		{
 			DamageSystem(i);
 		}
 		else
 		{
-			cooling.IncreaseHeat(this, i.amount);
+			heatContainer.IncreaseHeat(this, i.amount);
+			//cooling.IncreaseHeat(this, i.amount);
 		}
 	}
 
@@ -182,6 +217,8 @@ public class BodyController : MonoBehaviour
 
 	public void Die()
 	{
+		isDead = true;
+
 		ActiveRagdollController arc = GetComponentInChildren<ActiveRagdollController>();
 		arc.enabled = false;
 
@@ -211,7 +248,7 @@ public class BodyController : MonoBehaviour
 		}
 		ragdollCore.isKinematic = false;
 		ragdollCore.constraints = RigidbodyConstraints.None;
-		ragdollCore.AddForce(new Vector3(0, 0, -1000));
+		//ragdollCore.AddForce(new Vector3(0, 0, -1000));
 	}
 
 	#region Inputs
@@ -298,7 +335,7 @@ public class BodyController : MonoBehaviour
 
 	private void GetAimPoint()
 	{
-		if (Time.time - lastRaycastTime >= raycastInterval)
+		if (Time.time - lastRaycastTime >= raycastInterval && rb.velocity.magnitude < 0.2f)
 		{
 			Vector3 torso = aimCam.transform.position + 20 * aimCam.transform.forward;
 			Ray ray = new Ray(aimCam.transform.position, aimCam.transform.forward);
@@ -353,9 +390,25 @@ public class BodyController : MonoBehaviour
 
 				if (bodyHit.HasValue)
 				{
-					Vector3 targetPoint = bodyHit.Value.point;
-					// Rotate the arm/gun to aim at the targetPoint
-					weaponAimPoint.position = targetPoint;
+					if (enviroHits.Count > 0)
+					{
+						enviroHits.Sort((hit1, hit2) => hit1.distance.CompareTo(hit2.distance));
+
+						if (Vector3.Distance(rb.transform.position, bodyHit.Value.point) < Vector3.Distance(rb.transform.position, enviroHits[0].point))
+						{
+							Vector3 targetPoint = bodyHit.Value.point;
+							weaponAimPoint.position = targetPoint;
+						}
+						else
+						{
+							Vector3 targetPoint = enviroHits[0].point;
+							// Rotate the arm/gun to aim at the targetPoint
+							weaponAimPoint.position = targetPoint;
+						}
+					}
+					// Vector3 targetPoint = bodyHit.Value.point;
+					// // Rotate the arm/gun to aim at the targetPoint
+					// weaponAimPoint.position = targetPoint;
 				}
 				else if (enviroHits.Count > 0)
 				{
@@ -373,6 +426,13 @@ public class BodyController : MonoBehaviour
 			}
 			torsoAimPoint.position = torso;
 		}
+		else
+		{
+			Vector3 torso = aimCam.transform.position + 20 * aimCam.transform.forward;
+			torsoAimPoint.position = torso;
+			weaponAimPoint.position = torso;
+		}
+
 
 		// Vector3 torso = aimCam.transform.position + 20 * aimCam.transform.forward;
 		// if (Physics.Raycast(aimCam.transform.position, aimCam.transform.forward, out hit, Mathf.Infinity, aimMask))
@@ -411,25 +471,29 @@ public class BodyController : MonoBehaviour
 
 	private void doCooling()
 	{
-		if (cooling.isOverheated)
+		// if (cooling.isOverheated)
+		// {
+		// 	cooling.CooldownOverheated();
+		// }
+		// else
+		// {
+		if (rb.velocity.magnitude < 0.05f)
 		{
-			cooling.CooldownOverheated();
+			cooling.SetStandingStill(true);
 		}
 		else
 		{
-			if (rb.velocity.magnitude > 0.05f)
-			{
-				StopCooling();
-			}
-			else
-			{
-				cooling.Cooldown();
-			}
+			cooling.SetStandingStill(false);
 		}
-		cooling.PassiveCooldown();
+		// 	else
+		// 	{
+		// 		cooling.Cooldown();
+		// 	}
+		// }
+		// cooling.PassiveCooldown();
 
 		//TODO Temporary heating gauge visual
-		coolingGauge.transform.localScale = coolingGaugeScaleCache * Mathf.Clamp((cooling.currentHeat + 0.01f) / cooling.getMaxHeat(), 0, 1f);
+		coolingGauge.transform.localScale = coolingGaugeScaleCache * Mathf.Clamp((heatContainer.currentTemperature + 0.01f) / cooling.GetMaxHeat(), 0, 1f);
 	}
 
 	private void doSiphoning()
@@ -444,6 +508,57 @@ public class BodyController : MonoBehaviour
 		}
 	}
 
+	private void setJointStrength()
+	{
+		float overheated = cooling.isOverheated ? 0.2f : 1f;
+
+		tempJoint = upperTorsoJoint.slerpDrive;
+		tempJoint.positionSpring = (legs.taggingModifier / 100f * 100000 * overheated) + 1000;
+		upperTorsoJoint.slerpDrive = tempJoint;
+
+		tempJoint = middleTorsoJoint.slerpDrive;
+		tempJoint.positionSpring = (legs.taggingModifier / 100f * 1000000 * overheated) + 1000;
+		middleTorsoJoint.slerpDrive = tempJoint;
+
+		tempJoint = upperRightArmJoint.slerpDrive;
+		tempJoint.positionSpring = (weapons.disruptionModifier / 100f * 800000 * overheated) + 1000;
+		upperRightArmJoint.slerpDrive = tempJoint;
+
+		//TODO Temporary tagging gauge visual
+		taggingGauge.transform.localScale = taggingGaugeScaleCache * Mathf.Clamp((legs.taggingModifier + 0.01f) / 100f, 0, 1f);
+	}
+
+	private void SetRigPosture()
+	{
+		float posture = legs.taggingModifier / 100;
+
+		upperTorsoMac.data.sourceObjects.SetWeight(0, posture);
+		upperTorsoMac.data.sourceObjects.SetWeight(1, 1 - posture);
+
+		lowerTorsoMac.data.sourceObjects.SetWeight(0, posture);
+		lowerTorsoMac.data.sourceObjects.SetWeight(1, 1 - posture);
+
+		var a = upperTorsoMac.data.sourceObjects;
+		var a0 = a[0];
+		var a1 = a[1];
+		a0.weight = posture;
+		a1.weight = 1 - posture;
+		a[0] = a0;
+		a[1] = a1;
+		upperTorsoMac.data.sourceObjects = a;
+
+		a = lowerTorsoMac.data.sourceObjects;
+		a0 = a[0];
+		a1 = a[1];
+		a0.weight = posture;
+		a1.weight = 1 - posture;
+		a[0] = a0;
+		a[1] = a1;
+		lowerTorsoMac.data.sourceObjects = a;
+
+		taggingTarget.rotation = Quaternion.Euler(270 + (30 * (1 - posture)), 0, 180);
+	}
+
 	//public void StartCooling()
 	//{
 	//    if (decrementCoroutine == null)
@@ -452,23 +567,38 @@ public class BodyController : MonoBehaviour
 	//    }
 	//}
 
-	public void StopCooling()
-	{
-		cooling.ResetCooldown();
-	}
+	// public void StopCooling()
+	// {
+	// 	cooling.ResetCooldown();
+	// }
 
 	// Update is called once per frame
 	void Update()
 	{
-		DoRotation();
-		GetAimPoint();
+		if (!isDead)
+		{
+			DoRotation();
+			GetAimPoint();
+		}
 	}
 
 	private void FixedUpdate()
 	{
-		ExecutePhysicsBasedInputs();
+		if (!isDead)
+		{
+			ExecutePhysicsBasedInputs();
+			doSiphoning();
+		}
 		legs.DoMoveDeacceleration();
+		legs.RecoverFromTagging();
+		weapons.RecoverFromDisruption();
 		doCooling();
-		doSiphoning();
+		setJointStrength();
+		SetRigPosture();
+
+		// if (isAI)
+		// {
+		// 	Debug.Log(legs.taggingModifier);
+		// }
 	}
 }

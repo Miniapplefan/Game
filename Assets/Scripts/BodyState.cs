@@ -5,6 +5,7 @@ using System.Linq;
 
 public class BodyState : MonoBehaviour
 {
+	public HeatContainer heatContainer;
 	public CoolingModel cooling;
 	private LegsModel legs;
 	private SensorsModel sensors;
@@ -17,10 +18,16 @@ public class BodyState : MonoBehaviour
 
 	public Collider head;
 
+	public Collider rightArm;
+	public Collider rightLeg;
+
+	public Collider leftLeg;
+
 	public BodyState targetBodyState;
 
-	public void Init(List<SystemModel> systems)
+	public void Init(List<SystemModel> systems, HeatContainer heat)
 	{
+		heatContainer = heat;
 
 		cooling = systems.OfType<CoolingModel>().FirstOrDefault();
 		legs = systems.OfType<LegsModel>().FirstOrDefault();
@@ -31,7 +38,7 @@ public class BodyState : MonoBehaviour
 
 	void Update()
 	{
-		bodyHeat = cooling.currentHeat;
+		bodyHeat = heatContainer.currentTemperature;
 		bodyIsOverheated = cooling.isOverheated;
 	}
 
@@ -40,9 +47,9 @@ public class BodyState : MonoBehaviour
 		return cooling.currentLevel;
 	}
 
-	public float Cooling_getCurrentHeat()
+	public float HeatContainer_getCurrentHeat()
 	{
-		return cooling.currentHeat;
+		return heatContainer.currentTemperature;
 	}
 
 	public bool Cooling_IsOverheated()
@@ -53,6 +60,11 @@ public class BodyState : MonoBehaviour
 	public int Legs_getSystemHealth()
 	{
 		return legs.currentLevel;
+	}
+
+	public float Legs_getTaggingHealth()
+	{
+		return legs.taggingModifier;
 	}
 
 	public int Weapons_getSystemHealth()

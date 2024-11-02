@@ -6,6 +6,7 @@ public class AttackConfigSO : ScriptableObject
 	public int SensorRadius = 40;
 	public float FOVAngle = 90;
 	public LayerMask AttackableLayerMask;
+	public LayerMask EnvironmentalCoolingLayerMask;
 
 	public LayerMask SiphonableLayerMask;
 	[Tooltip("Lower is a better hiding spot")]

@@ -11,6 +11,15 @@ public class LegsModel : SystemModel
 	private float moveDeaccelerationX;
 	private float moveDeaccelerationZ;
 	public float baseWalkSpeed = 4f;
+
+	public float taggingModifier = 100f;
+
+	public float taggingRecoveryRate = 0.2f;
+
+	public float taggingRecoveryRateCache = 0.2f;
+
+	public float taggingRecoveryRateRecoveryRate = 0.0001f;
+
 	public bool canMove = true;
 
 	public ICommand forwardCommand;
@@ -76,12 +85,52 @@ public class LegsModel : SystemModel
 	{
 		if (canMove)
 		{
-			return getSpeedFromLeg(rightLegHealth) + getSpeedFromLeg(leftLegHealth);
+			return (getSpeedFromLeg(rightLegHealth) + getSpeedFromLeg(leftLegHealth)) * (taggingModifier / 100f);
 		}
 		else
 		{
 			return 0f;
 		}
+	}
+
+	public void RecoverFromTagging()
+	{
+		if (taggingModifier < 100f)
+		{
+			taggingModifier += taggingRecoveryRateCache;
+		}
+		if (taggingRecoveryRateCache < taggingRecoveryRate)
+		{
+			taggingRecoveryRateCache += taggingRecoveryRateRecoveryRate;
+		}
+	}
+
+	public void HandleTagging(Limb l, float impact)
+	{
+		float taggingDam = impact / 10;
+		switch (l.specificLimb)
+		{
+			case Limb.LimbID.leftLeg:
+				DealTagging(taggingDam, 0.02f);
+				break;
+			case Limb.LimbID.rightLeg:
+				DealTagging(taggingDam, 0.02f);
+				break;
+			case Limb.LimbID.torso:
+				DealTagging(taggingDam / 3, 0.03f);
+				break;
+			case Limb.LimbID.head:
+				DealTagging(taggingDam / 10, 0.06f);
+				break;
+			default:
+				break;
+		}
+	}
+
+	private void DealTagging(float tagAmount, float taggingRecoveryAmount)
+	{
+		taggingModifier = Mathf.Max(10f, taggingModifier - tagAmount);
+		taggingRecoveryRateCache = Mathf.Max(0.02f, taggingRecoveryRateCache - taggingRecoveryAmount);
 	}
 
 	public void damageLeftLeg(int amount)
@@ -125,6 +174,8 @@ public class LegsModel : SystemModel
 	public void OnCoolingSystemCooledOff()
 	{
 		canMove = true;
+		taggingModifier = 100;
+		taggingRecoveryRateCache = taggingRecoveryRate;
 	}
 
 	#region Execute Commands

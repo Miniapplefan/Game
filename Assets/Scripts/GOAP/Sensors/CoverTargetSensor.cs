@@ -12,6 +12,7 @@ public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 	private AttackConfigSO AttackConfig;
 	private Collider[] TargetCollider = new Collider[1];
 	private Collider[] Colliders = new Collider[10];
+	private Collider[] EnvironmentalCoolingColliders = new Collider[10];
 	private Vector3 currentPosition;
 	private NavMeshAgent navMeshAgent;
 
@@ -28,9 +29,74 @@ public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 		currentPosition = agent.transform.position;
 		navMeshAgent = agent.GetComponent<NavMeshAgent>();
 
+		// 	Vector3 coverPosition = GetCoverPosition(agent);
+		// 	Vector3 environmentalCoolingElementPosition = GetEnvironmentalCoolingPosition(agent);
+		// 	Vector3 position;
+
+		// 	position = Vector3.Distance(currentPosition, coverPosition) <
+		//  Vector3.Distance(currentPosition, environmentalCoolingElementPosition) ? coverPosition : environmentalCoolingElementPosition;
+
 		Vector3 position = GetCoverPosition(agent);
 
 		return new PositionTarget(position);
+	}
+
+	private Vector3 GetEnvironmentalCoolingPosition(IMonoAgent agent)
+	{
+		Collider closestCoolingElement = null;
+		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, EnvironmentalCoolingColliders, AttackConfig.EnvironmentalCoolingLayerMask) > 0)
+		{
+			// Assume the AI has a HeatContainer attached to it
+			HeatContainer myHeatContainer = agent.GetComponentInChildren<HeatContainer>();
+			// Debug.Log("My Heat: " + myHeatContainer.GetTemperature());
+
+			float closestDistance = Mathf.Infinity;
+
+			for (int i = 0; i < EnvironmentalCoolingColliders.Length; i++)
+			{
+				Collider environmentalCollider = EnvironmentalCoolingColliders[i];
+				if (environmentalCollider == null)
+				{
+					continue;
+				}
+
+				// Check if the environmental object has a HeatContainer
+				//Debug.Log(environmentalCollider.gameObject.name);
+				// Component[] components = environmentalCollider.GetComponents(typeof(Component));
+				// foreach (Component component in components)
+				// {
+				// 	Debug.Log(component.ToString());
+				// }
+
+				bool tempCheck = true;
+				HeatContainer environmentalHeatContainer = environmentalCollider.gameObject.GetComponent<HeatContainer>();
+				if (environmentalHeatContainer != null)
+				{
+					tempCheck = environmentalHeatContainer.GetTemperature() < myHeatContainer.GetTemperature();
+				}
+
+				float dist = Vector3.Distance(agent.transform.position, environmentalCollider.transform.position);
+				bool distCheck = dist < closestDistance;
+
+				if (tempCheck && distCheck)
+				{
+					closestDistance = dist;
+					closestCoolingElement = environmentalCollider;
+				}
+				else
+				{
+					continue;
+				}
+			}
+		}
+		if (closestCoolingElement != null)
+		{
+			return closestCoolingElement.transform.position;
+		}
+		else
+		{
+			return new Vector3(Mathf.Infinity, Mathf.Infinity, Mathf.Infinity);
+		}
 	}
 
 	private Vector3 GetCoverPosition(IMonoAgent agent)

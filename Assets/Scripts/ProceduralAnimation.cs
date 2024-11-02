@@ -35,7 +35,7 @@ public class ProceduralAnimation : MonoBehaviour
     public Transform rightFootTargetRig;
     public Transform pivot;
     public Transform scaler;
-    
+
     public float smoothness = 2f;
     public float stepHeight = 0.2f;
     public float stepLength = 1f;
@@ -69,7 +69,7 @@ public class ProceduralAnimation : MonoBehaviour
     private FootState leftFootState = FootState.Grounded;
     private FootState rightFootState = FootState.Grounded;
 
-    private string lastFootCase= "";
+    private string lastFootCase = "";
     private int lastSign = 0;
     private float lastZ = 1;
     private bool backwards = false;
@@ -91,12 +91,12 @@ public class ProceduralAnimation : MonoBehaviour
     {
         if (n > 0f) return "+";
         else return "-";
-       
+
     }
 
     // Update is called once per frame
     void FixedUpdate()
-    {        
+    {
         velocity = transform.position - lastBodyPos;
         velocity *= velocityMultiplier;
         velocity = (velocity + smoothness * lastVelocity) / (smoothness + 1f);
@@ -136,19 +136,19 @@ public class ProceduralAnimation : MonoBehaviour
 
         stepLength = Mathf.Lerp(stepLength, (velocity.magnitude / 7.7f) * targetStepLength, velocity.magnitude);
 
-        if(velocity.magnitude < 1)
+        if (velocity.magnitude < 1)
         {
             stepLength = Mathf.Lerp(stepLength, targetStepLength, 0.5f);
         }
 
         if (velocity.magnitude < 1 && (leftFootTargetRig.localPosition.y > 0.2f || rightFootTargetRig.localPosition.y > 0.2f) && lastFootCase == "")
         {
-            if(leftFootTargetRig.localPosition.y > 0.2f && leftFootTargetRig.localPosition.z >= rightFootTargetRig.localPosition.z)  
+            if (leftFootTargetRig.localPosition.y > 0.2f && leftFootTargetRig.localPosition.z >= rightFootTargetRig.localPosition.z)
             {
                 pivot.Rotate(Vector3.right, sign * angularSpeed / 2, Space.Self);
                 lastFootCase = "A";
             }
-            else if(rightFootTargetRig.localPosition.y > 0.2f && rightFootTargetRig.localPosition.z >= leftFootTargetRig.localPosition.z)
+            else if (rightFootTargetRig.localPosition.y > 0.2f && rightFootTargetRig.localPosition.z >= leftFootTargetRig.localPosition.z)
             {
                 pivot.Rotate(Vector3.right, sign * angularSpeed / 2, Space.Self);
                 lastFootCase = "B";
@@ -165,24 +165,24 @@ public class ProceduralAnimation : MonoBehaviour
             }
         }
 
-        if (velocity.magnitude < 1
-            && (
-            Vector3.Distance(leftFootTargetRig.position, rightFootTarget.position) <
-            Vector3.Distance(rightFootTargetRig.position, rightFootTarget.position)
-            ||
-            Vector3.Distance(rightFootTargetRig.position, leftFootTarget.position) <
-            Vector3.Distance(leftFootTargetRig.position, leftFootTarget.position)))
-        {
-            //Transform tempTarget = leftFootTarget;
-            //leftFootTarget = rightFootTarget;
-            //rightFootTarget = tempTarget;
-            //Vector3.Dot(pivot.localScale, new Vector3(-1, -1, 1));
-        }
+        // if (velocity.magnitude < 1
+        //     && (
+        //     Vector3.Distance(leftFootTargetRig.position, rightFootTarget.position) <
+        //     Vector3.Distance(rightFootTargetRig.position, rightFootTarget.position)
+        //     ||
+        //     Vector3.Distance(rightFootTargetRig.position, leftFootTarget.position) <
+        //     Vector3.Distance(leftFootTargetRig.position, leftFootTarget.position)))
+        // {
+        //     //Transform tempTarget = leftFootTarget;
+        //     //leftFootTarget = rightFootTarget;
+        //     //rightFootTarget = tempTarget;
+        //     //Vector3.Dot(pivot.localScale, new Vector3(-1, -1, 1));
+        // }
 
         Vector3 desiredPositionLeft = leftFootTarget.position;
         Vector3 desiredPositionRight = rightFootTarget.position;
 
-        if(leftFootTargetRig.localPosition.y < 0.2)
+        if (leftFootTargetRig.localPosition.y < 0.2)
         {
             leftFootState = FootState.Grounded;
         }
@@ -211,7 +211,7 @@ public class ProceduralAnimation : MonoBehaviour
         //}
         if (posNormLeft[0].y > desiredPositionLeft.y)
         {
-            if(leftFootTarget.localPosition.y > 0)
+            if (leftFootTarget.localPosition.y > 0)
             {
                 leftFootTargetRig.position = new Vector3(posNormLeft[0].x, posNormLeft[0].y, desiredPositionLeft.z);
             }
@@ -240,7 +240,7 @@ public class ProceduralAnimation : MonoBehaviour
         //}
         if (posNormRight[0].y > desiredPositionRight.y)
         {
-            if(rightFootTarget.localPosition.y > 0 || velocity.magnitude < 1)
+            if (rightFootTarget.localPosition.y > 0 || velocity.magnitude < 1)
             {
                 rightFootTargetRig.position = new Vector3(posNormRight[0].x, posNormRight[0].y, desiredPositionRight.z);
             }
@@ -290,7 +290,7 @@ public class ProceduralAnimation : MonoBehaviour
         lastBodyPos = transform.position;
     }
 
-    
+
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireSphere(leftFootTarget.position, 0.2f);

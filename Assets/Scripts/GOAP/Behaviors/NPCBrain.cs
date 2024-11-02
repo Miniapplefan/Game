@@ -25,6 +25,7 @@ public class NPCBrain : MonoBehaviour
 		goals.Add(new GoalConsideration(new CooldownGoal(), true, ConsiderCooldownGoal));
 		goals.Add(new GoalConsideration(new OverheatHostileGoal(), false, ConsiderOverheatTargetGoal));
 		goals.Add(new GoalConsideration(new DeploySiphonGoal(), true, ConsiderDeploySiphonGoal));
+		goals.Add(new GoalConsideration(new TakeCoverGoal(), true, ConsiderTakeCoverGoal));
 	}
 
 	private void Start()
@@ -77,7 +78,12 @@ public class NPCBrain : MonoBehaviour
 						AgentBehaviour.SetGoal<DeploySiphonGoal>(chosenGoal.cancelable);
 						currentGoalInertia = maxInertia;
 						break;
+					case TakeCoverGoal:
+						AgentBehaviour.SetGoal<TakeCoverGoal>(chosenGoal.cancelable);
+						currentGoalInertia = maxInertia;
+						break;
 					default:
+						Debug.Log("AI Defaulting");
 						AgentBehaviour.SetGoal<CooldownGoal>(chosenGoal.cancelable);
 						break;
 				}
@@ -119,7 +125,7 @@ public class NPCBrain : MonoBehaviour
 
 	private float ConsiderCooldownGoal()
 	{
-		float heatConsideration = Mathf.Pow((bodyState.Cooling_getCurrentHeat() / bodyState.cooling.getMaxHeat()), 3);
+		float heatConsideration = Mathf.Pow((bodyState.HeatContainer_getCurrentHeat() / bodyState.cooling.GetMaxHeat()), 3);
 		float weaponsChargedConsideration = bodyState.Weapons_numWeaponsCharged() == 0 ? 1 : 1 / bodyState.Weapons_numWeaponsCharged();
 
 		return PositiveHeatConsideration()
@@ -127,10 +133,16 @@ public class NPCBrain : MonoBehaviour
 		;
 	}
 
+	private float ConsiderTakeCoverGoal()
+	{
+		return NegativeWeaponsChargedConsideration()
+		* NegativeTaggingConsideration();
+	}
+
 	private float ConsiderDeploySiphonGoal()
 	{
-		float heatConsideration = -(Mathf.Pow((bodyState.Cooling_getCurrentHeat() / bodyState.cooling.getMaxHeat()), 3)) + 1;
-		float target_heatConsideration = Mathf.Pow((bodyState.Cooling_getCurrentHeat() / bodyState.cooling.getMaxHeat()), 2);
+		float heatConsideration = -(Mathf.Pow((bodyState.HeatContainer_getCurrentHeat() / bodyState.cooling.GetMaxHeat()), 3)) + 1;
+		float target_heatConsideration = Mathf.Pow((bodyState.HeatContainer_getCurrentHeat() / bodyState.cooling.GetMaxHeat()), 2);
 		float deployedConsideration = bodyState.Siphon_isExtended() ? 0 : 1;
 		float weaponsChargedConsideration = bodyState.Weapons_numWeaponsCharged() == 0 ? 1 : 1 / bodyState.Weapons_numWeaponsCharged();
 
@@ -144,7 +156,7 @@ public class NPCBrain : MonoBehaviour
 
 	private float ConsiderOverheatTargetGoal()
 	{
-		float heatConsideration = -(Mathf.Pow((bodyState.Cooling_getCurrentHeat() / bodyState.cooling.getMaxHeat()), 3)) + 1;
+		float heatConsideration = -(Mathf.Pow((bodyState.HeatContainer_getCurrentHeat() / bodyState.cooling.GetMaxHeat()), 3)) + 1;
 		float weaponsChargedConsideration = bodyState.Weapons_numWeaponsCharged() == 0 ? 0 : bodyState.Weapons_numWeaponsCharged() / 3;
 		// float target_heatConsideration = Mathf.Clamp(Mathf.Pow((bodyState.Cooling_getCurrentHeat() / bodyState.cooling.getMaxHeat()), 2), 0.8f, 1f);
 
@@ -158,21 +170,44 @@ public class NPCBrain : MonoBehaviour
 
 
 	/// <summary>
-	/// High score for low heat, low score for high heat
+	/// High score for low heat, low score for high heat, considering ambient temperature as the minimum possible heat
 	/// </summary>
 	/// <returns>float between 0 and 1</returns>
 	private float NegativeHeatConsideration()
 	{
-		return -(Mathf.Pow((bodyState.Cooling_getCurrentHeat() / bodyState.cooling.getMaxHeat()), 3)) + 1;
+		float currentHeat = bodyState.HeatContainer_getCurrentHeat();
+		float maxHeat = bodyState.cooling.GetMaxHeat();
+		float ambientTemperature = bodyState.heatContainer.GetAirTemperature();
+
+		// Ensure we are not trying to cool below the ambient temperature
+		float normalizedHeat = (currentHeat - ambientTemperature) / (maxHeat - ambientTemperature);
+
+		return -(Mathf.Pow(normalizedHeat, 3)) + 1;
 	}
 
 	/// <summary>
-	/// High score for high heat, low score for low heat
+	/// High score for high heat, low score for low heat, considering ambient temperature as the minimum possible heat
 	/// </summary>
 	/// <returns>float between 0 and 1</returns>
 	private float PositiveHeatConsideration()
 	{
-		return Mathf.Pow((bodyState.Cooling_getCurrentHeat() / bodyState.cooling.getMaxHeat()), 3);
+		float currentHeat = bodyState.HeatContainer_getCurrentHeat();
+		float maxHeat = bodyState.cooling.GetMaxHeat();
+		float ambientTemperature = bodyState.heatContainer.GetAirTemperature();
+
+		// Ensure we are not trying to cool below the ambient temperature
+		float normalizedHeat = (currentHeat - ambientTemperature) / (maxHeat - ambientTemperature);
+		//Debug.Log(bodyState.heatContainer.GetAirTemperature());
+		return Mathf.Pow(normalizedHeat, 3);
+	}
+
+	/// <summary>
+	/// High score for being tagged a lot, low score for not having much tagging
+	/// </summary>
+	/// <returns>float between 0 and 1</returns>
+	private float NegativeTaggingConsideration()
+	{
+		return -(Mathf.Pow((bodyState.Legs_getTaggingHealth() / 100), 3)) + 1;
 	}
 
 	/// <summary>
@@ -185,6 +220,16 @@ public class NPCBrain : MonoBehaviour
 	}
 
 	/// <summary>
+	/// Higher score based on less number of weapons charged, 0 if all weapons charged 
+	/// </summary>
+	/// <returns>float between 0 and 1</returns>
+	private float NegativeWeaponsChargedConsideration()
+	{
+		// If all weapons are charged, return 0; if none are charged, return 1
+		return 1 - (bodyState.Weapons_numWeaponsCharged() / 3);
+	}
+
+	/// <summary>
 	/// High score for target having high heat, low score for target having low heat
 	/// </summary>
 	/// <returns>float between 0 and 1</returns>
@@ -192,7 +237,8 @@ public class NPCBrain : MonoBehaviour
 	{
 		if (bodyState.targetBodyState != null)
 		{
-			return Mathf.Pow(bodyState.targetBodyState.Cooling_getCurrentHeat() / bodyState.targetBodyState.cooling.getMaxHeat(), 8);
+			//Debug.Log(Mathf.Pow((bodyState.targetBodyState.HeatContainer_getCurrentHeat() - bodyState.heatContainer.GetAirTemperature()) / (bodyState.targetBodyState.cooling.GetMaxHeat() - bodyState.heatContainer.GetAirTemperature()), 8));
+			return Mathf.Pow((bodyState.targetBodyState.HeatContainer_getCurrentHeat() - bodyState.heatContainer.GetAirTemperature()) / (bodyState.targetBodyState.cooling.GetMaxHeat() - bodyState.heatContainer.GetAirTemperature()), 8);
 		}
 		else
 		{

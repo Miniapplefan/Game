@@ -14,6 +14,14 @@ public class WeaponsModel : SystemModel
 
 	bool canFire = true;
 
+	public float disruptionModifier = 100f;
+
+	public float disruptionRecoveryRate = 0.2f;
+
+	public float disruptionRecoveryRateCache = 0.2f;
+
+	public float disruptionRecoveryRateRecoveryRate = 0.0001f;
+
 	public delegate void WeaponsEventHandler(object sender, float h);
 	public event WeaponsEventHandler RaiseFiredWeapon;
 
@@ -139,6 +147,39 @@ public class WeaponsModel : SystemModel
 	public void OnCoolingSystemCooledOff()
 	{
 		canFire = true;
+	}
+
+	public void RecoverFromDisruption()
+	{
+		if (disruptionModifier < 100f)
+		{
+			disruptionModifier += disruptionRecoveryRateCache;
+		}
+		if (disruptionRecoveryRateCache < disruptionRecoveryRate)
+		{
+			disruptionRecoveryRateCache += disruptionRecoveryRateRecoveryRate;
+		}
+	}
+
+	public void HandleDisruption(Limb l)
+	{
+		switch (l.specificLimb)
+		{
+			case Limb.LimbID.rightArm:
+				DealDisruption(30f, 0.05f);
+				break;
+			case Limb.LimbID.head:
+				DealDisruption(10f, 0.1f);
+				break;
+			default:
+				break;
+		}
+	}
+
+	private void DealDisruption(float disruptionAmount, float disruptionRecoveryAmount)
+	{
+		disruptionModifier = Mathf.Max(10f, disruptionModifier - disruptionAmount);
+		disruptionRecoveryRateCache = Mathf.Max(0.02f, disruptionRecoveryRateCache - disruptionRecoveryAmount);
 	}
 
 	public void ExecuteWeapon1()
