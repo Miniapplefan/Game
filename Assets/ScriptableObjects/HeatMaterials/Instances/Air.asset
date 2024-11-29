@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Air
   m_EditorClassIdentifier: 
   containerType: 1
-  specificHeatCapacity: 100
+  specificHeatCapacity: 1000
   mass: 1.2
   fluidInteractionConstant: 100
   thermalConductivity: 1

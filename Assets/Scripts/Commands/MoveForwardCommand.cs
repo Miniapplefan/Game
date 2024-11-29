@@ -4,16 +4,17 @@ using UnityEngine;
 
 public class MoveForwardCommand : ICommand
 {
-    LegsModel model;
+	LegsModel model;
 
-    public MoveForwardCommand(LegsModel m)
-    {
-        model = m;
-    }
+	public MoveForwardCommand(LegsModel m)
+	{
+		model = m;
+	}
 
-    public void Execute()
-    {
-        //Debug.Log("move forward");
-        model.rb.AddForce(model.rb.transform.forward * model.getMoveSpeed() * model.moveAcceleration * Time.deltaTime);
-    }
+	public void Execute()
+	{
+		//Debug.Log("move forward");
+		model.rb.AddForce(model.rb.transform.forward * model.getMoveSpeed() * model.moveAcceleration * Time.deltaTime);
+	}
+
 }

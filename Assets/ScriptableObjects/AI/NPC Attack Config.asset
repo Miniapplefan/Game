@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f91903fd3565745d4ae6b6b867a20d85, type: 3}
   m_Name: NPC Attack Config
   m_EditorClassIdentifier: 
-  SensorRadius: 40
+  SensorRadius: 300
   FOVAngle: 90
+  LineOfSightSphereCastRadius: 0.02
   AttackableLayerMask:
     serializedVersion: 2
     m_Bits: 256
@@ -23,7 +24,7 @@ MonoBehaviour:
   SiphonableLayerMask:
     serializedVersion: 2
     m_Bits: 1024
-  HideSensitivity: -0.5
+  HideSensitivity: 0.07
   MinPlayerDistance: 0
   MinObstacleHeight: 1.04
   ObstructionLayerMask:

@@ -160,13 +160,13 @@ public class CoolingModel : SystemModel
 
 	private float maxHeatMultiplier = 10f;
 	private float passiveCoolingMultiplier = 0.0f;
-	private float coolingMultiplier = 7f;
-	private float overheatingCoolingMultiplier = 180f;
+	private float coolingMultiplier = 40f;
+	private float overheatingCoolingMultiplier = 4000f;
 
 	public enum CoolingState { PassiveCooldown, Cooldown, CooldownOverheated }
 	public CoolingState currentCoolingState;
 
-	public event Action<CoolingState> OnCoolingStateChanged; // Notify HeatContainer of state changes
+	public event Action OnCoolingStateChanged; // Notify HeatContainer of state changes
 
 	public CoolingModel(int currentLvl, Rigidbody r) : base(currentLvl)
 	{
@@ -226,8 +226,8 @@ public class CoolingModel : SystemModel
 		if (currentCoolingState != newState)
 		{
 			currentCoolingState = newState;
-			OnCoolingStateChanged?.Invoke(currentCoolingState);
-			//			Debug.Log("new cooling state: " + newState);
+			OnCoolingStateChanged?.Invoke();
+			//Debug.Log("new cooling state: " + newState);
 		}
 	}
 

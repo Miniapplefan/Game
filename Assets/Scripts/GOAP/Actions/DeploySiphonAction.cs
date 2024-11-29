@@ -23,6 +23,7 @@ public class DeploySiphonAction : ActionBase<AttackData>, IInjectable
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.SiphonableLayerMask) > 0)
 		{
 			data.AIController.SetAimTarget(Colliders[0].transform.position);
+			data.bodyState.siphonTarget = Colliders[0].gameObject.GetComponent<SiphonTarget>();
 		}
 
 		bool shouldDeploy = Vector3.Distance(agent.transform.position, Colliders[0].transform.position) < 2f;

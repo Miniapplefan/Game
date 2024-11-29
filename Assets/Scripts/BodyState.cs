@@ -10,7 +10,7 @@ public class BodyState : MonoBehaviour
 	private LegsModel legs;
 	private SensorsModel sensors;
 	public WeaponsModel weapons;
-	private SiphonModel siphon;
+	public SiphonModel siphon;
 	public Rigidbody rb;
 
 	public float bodyHeat;
@@ -24,6 +24,8 @@ public class BodyState : MonoBehaviour
 	public Collider leftLeg;
 
 	public BodyState targetBodyState;
+
+	public SiphonTarget siphonTarget;
 
 	public void Init(List<SystemModel> systems, HeatContainer heat)
 	{

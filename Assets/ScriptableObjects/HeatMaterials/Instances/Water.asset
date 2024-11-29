@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Water
   m_EditorClassIdentifier: 
   containerType: 0
-  specificHeatCapacity: 418
+  specificHeatCapacity: 4184
   mass: 1000
   fluidInteractionConstant: 10
-  thermalConductivity: 10000
+  thermalConductivity: 100000

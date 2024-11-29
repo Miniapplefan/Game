@@ -953,6 +953,7 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
+  currentAir: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 0
   dissipationRate: 0.1
@@ -4904,11 +4905,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 911535229}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!136 &913269764 stripped
-CapsuleCollider:
-  m_CorrespondingSourceObject: {fileID: 6703837814464854948, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-  m_PrefabInstance: {fileID: 1343875628882214942}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &920301658 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3776128994965666826, guid: 62745b3f93b3043c7b77a3a45905a86e, type: 3}
@@ -5366,11 +5362,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1017972294}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!136 &1017988977 stripped
-CapsuleCollider:
-  m_CorrespondingSourceObject: {fileID: 6703837814464854932, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-  m_PrefabInstance: {fileID: 1343875628882214942}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1019558356
 GameObject:
   m_ObjectHideFlags: 0
@@ -5595,11 +5586,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c8cc2faf6fb14d71bd9934ba1fc53a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1 &1095980371 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2565961876176675113, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-  m_PrefabInstance: {fileID: 1343875628882214942}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1100983112
 GameObject:
   m_ObjectHideFlags: 0
@@ -9191,6 +9177,7 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
+  currentAir: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 0
   dissipationRate: 0.1
@@ -10745,11 +10732,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1889818866}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!136 &1909092697 stripped
-CapsuleCollider:
-  m_CorrespondingSourceObject: {fileID: 6703837814464854921, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-  m_PrefabInstance: {fileID: 1343875628882214942}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1921032577
 GameObject:
   m_ObjectHideFlags: 0
@@ -11777,22 +11759,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1569165859373973031, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1992899561468355946, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 1992899561468355946, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 1992899561468355946, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.2
-      objectReference: {fileID: 0}
     - target: {fileID: 2407845242657379070, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 10.85
@@ -11833,45 +11799,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3475002227110575618, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: m_Height
-      value: 0.35081542
-      objectReference: {fileID: 0}
-    - target: {fileID: 3475002227110575618, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: m_Center.y
-      value: 0.033624087
-      objectReference: {fileID: 0}
-    - target: {fileID: 3547062910547090824, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: leftLeg
-      value: 
-      objectReference: {fileID: 1017988977}
-    - target: {fileID: 3547062910547090824, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: rightArm
-      value: 
-      objectReference: {fileID: 913269764}
-    - target: {fileID: 3547062910547090824, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: rightLeg
-      value: 
-      objectReference: {fileID: 1909092697}
     - target: {fileID: 3922977938681861595, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
       propertyPath: m_Name
       value: Body_total
       objectReference: {fileID: 0}
-    - target: {fileID: 5056074503729969263, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.0278
-      objectReference: {fileID: 0}
-    - target: {fileID: 6703837814562132588, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2565961876176675113, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5741728038248001766}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
 --- !u!1 &2668085688117093026 stripped
 GameObject:
@@ -11987,30 +11922,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6703837815311462592, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
   m_PrefabInstance: {fileID: 1343875628882214942}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5741728038248001766
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1095980371}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3fb954a42986f401f9410f2c68f5306b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  containerType: 2
-  heatMat: {fileID: 11400000, guid: f2a1cb1e4a614408aba5570eefb86079, type: 2}
-  currentTemperature: 0
-  maxTemperature: 10
-  specificHeatCapacity: 0
-  mass: 1
-  fluidInteractionConstant: 0
-  thermalConductivity: 0
-  ambientTemperature: 0
-  dissipationRateFromAirCurrents: 1
-  dissipationRate: 0.1
-  isInTransferZone: 0
 --- !u!4 &6499644426333191704 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5230095239103626758, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}

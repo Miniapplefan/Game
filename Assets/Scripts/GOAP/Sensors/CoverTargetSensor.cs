@@ -6,6 +6,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using UnityEngine.AI;
 using CrashKonijn.Goap.Classes.References;
+using System.Collections.Generic;
 
 public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 {
@@ -111,28 +112,67 @@ public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 			{
 				if (hit1.transform.GetComponent<PlayerController>() != null)
 				{
-					float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
+					//********
+					// float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
 
-					// TODO Huge frame drop spike related to this while loop. spread the work out over multiple frames somehow
-					while (count < 10)
+					// // TODO Huge frame drop spike related to this while loop. spread the work out over multiple frames somehow
+					// while (count < 10)
+					// {
+					// 	Vector3 randomPointOnCircle = GetRandomPointOnCircle(Colliders[0].transform.position, distanceToPlayer);
+					// 	float distance = Vector3.Distance(agent.transform.position, randomPointOnCircle);
+
+					// 	if (distance < distanceToPlayer)
+					// 	{
+					// 		Vector3 direction2 = (Colliders[0].transform.position - randomPointOnCircle).normalized;
+					// 		RaycastHit hit2;
+					// 		if (Physics.Raycast(randomPointOnCircle, direction2, out hit2, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+					// 		{
+					// 			if (hit2.transform.GetComponent<PlayerController>() == null)
+					// 			{
+					// 				//Debug.Log("Do not see player, moving");
+					// 				return randomPointOnCircle;
+					// 			}
+					// 		}
+					// 	}
+					// 	count++;
+					// }
+					//********
+					List<Vector3> points = new List<Vector3>();
+					float lineLength = 20f; // Length of the strafing line
+					int numberOfPoints = 30; // Number of points to evaluate
+					Vector3 direction = Vector3.Cross(Vector3.up, (Colliders[0].transform.position - agent.transform.position).normalized); // Perpendicular to the player direction
+
+					for (int i = numberOfPoints - 1; i >= 0; i--) // Reverse the order
 					{
-						Vector3 randomPointOnCircle = GetRandomPointOnCircle(Colliders[0].transform.position, distanceToPlayer);
-						float distance = Vector3.Distance(agent.transform.position, randomPointOnCircle);
+						float t = (float)i / (numberOfPoints - 1); // Normalize to range [0, 1]
+						Vector3 point = agent.transform.position + direction * (t * lineLength - lineLength / 2);
+						points.Add(point);
+					}
 
-						if (distance < distanceToPlayer)
+					Vector3 closestPoint = Vector3.zero;
+					float closestDistance = float.MaxValue;
+
+					foreach (Vector3 point in points)
+					{
+						//Debug.Log("checking points");
+						float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
+						float distanceToAI = Vector3.Distance(point, agent.transform.position);
+
+						if (distanceToAI < distanceToPlayer && !HasLineOfSight(point, Colliders[0].transform.position))
 						{
-							Vector3 direction2 = (Colliders[0].transform.position - randomPointOnCircle).normalized;
-							RaycastHit hit2;
-							if (Physics.Raycast(randomPointOnCircle, direction2, out hit2, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+							//Debug.Log("point within range and has los");
+							if (distanceToAI < closestDistance)
 							{
-								if (hit2.transform.GetComponent<PlayerController>() == null)
-								{
-									//Debug.Log("Do not see player, moving");
-									return randomPointOnCircle;
-								}
+								//Debug.Log("closer point found");
+								closestDistance = distanceToAI;
+								closestPoint = point;
 							}
 						}
-						count++;
+					}
+
+					if (closestPoint != Vector3.zero)
+					{
+						return closestPoint;
 					}
 				}
 			}
@@ -201,6 +241,18 @@ public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 
 		}
 		return GetRandomPosition(agent);
+	}
+
+	bool HasLineOfSight(Vector3 start, Vector3 end)
+	{
+		RaycastHit hit;
+		//Physics.Raycast(start, (end - start).normalized, out hit, Mathf.Infinity)
+		if (Physics.SphereCast(start, AttackConfig.LineOfSightSphereCastRadius, (end - start).normalized, out hit, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+		{
+			//Debug.Log(hit.transform.GetComponent<PlayerController>() != null);
+			return hit.transform.GetComponent<PlayerController>() != null;
+		}
+		return false;
 	}
 
 	public int ColliderArraySortComparer(Collider A, Collider B)

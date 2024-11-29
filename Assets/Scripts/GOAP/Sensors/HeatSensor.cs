@@ -18,6 +18,6 @@ public class HeatSensor : LocalWorldSensorBase
 
   public override SenseValue Sense(IMonoAgent agent, IComponentReference references)
   {
-    return new SenseValue(Mathf.CeilToInt(references.GetCachedComponent<NPCBrain>().bodyState.HeatContainer_getCurrentHeat()));
+    return new SenseValue(Mathf.CeilToInt(references.GetCachedComponent<NPCBrain>().bodyState.heatContainer.GetTemperatureRelativeToAir()));
   }
 }

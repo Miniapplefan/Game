@@ -47,7 +47,7 @@ public class CooldownAction : ActionBase<CommonData>, IInjectable
 			return ActionRunState.Stop;
 		}
 
-		if (data.bodyState.HeatContainer_getCurrentHeat() <= data.bodyState.heatContainer.GetAirTemperature())
+		if (data.bodyState.heatContainer.GetTemperatureRelativeToAir() < 1)
 		{
 			return ActionRunState.Stop;
 		}

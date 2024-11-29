@@ -31,12 +31,23 @@ public class HostileLineOfSightSensor : LocalWorldSensorBase, IInjectable
 			Vector3 direction1 = (Colliders[0].transform.position - agent.transform.position).normalized;
 			if (Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
-				enemyHasLOS = true;
+				if (hit1.transform.GetComponent<PlayerController>() != null)
+				{
+					enemyHasLOS = true;
+				}
+				else
+				{
+					enemyHasLOS = false;
+				}
 			}
 			else
 			{
 				enemyHasLOS = false;
 			}
+		}
+		else
+		{
+			enemyHasLOS = false;
 		}
 		return new SenseValue(enemyHasLOS == true ? 1 : 0);
 		//return new SenseValue(Mathf.CeilToInt(references.GetCachedComponent<NPCBrain>().bodyState.HeatContainer_getCurrentHeat()));

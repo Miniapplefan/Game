@@ -145,6 +145,7 @@ public class Gun : MonoBehaviour
 	{
 		Rigidbody hitRb = hit.collider.GetComponent<Rigidbody>();
 		LimbToSystemLinker limb = hit.collider.GetComponent<LimbToSystemLinker>();
+		MarchingCubesGenerator marchingCubes = hit.collider.GetComponent<MarchingCubesGenerator>();
 
 		if (limb != null)
 		{
@@ -167,6 +168,10 @@ public class Gun : MonoBehaviour
 			//Debug.Log("hit rb");
 			Vector3 impulse = shootSystem.transform.forward * gunData.shootConfig.impactForce;
 			hitRb.AddForce(impulse * 2.5f, ForceMode.Impulse);
+		}
+		if (marchingCubes != null)
+		{
+			marchingCubes.TakeDamage(hit.point, 1);
 		}
 	}
 

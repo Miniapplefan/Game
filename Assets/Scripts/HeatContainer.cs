@@ -30,6 +30,7 @@ public class HeatContainer : MonoBehaviour
 	void Awake()
 	{
 		InitFromHeatMaterialSO();
+		// If a mech with a cooling model, initialize
 	}
 
 	// Method to set specific heat capacity based on container type
@@ -42,19 +43,22 @@ public class HeatContainer : MonoBehaviour
 		thermalConductivity = heatMat.thermalConductivity;
 	}
 
+	public void InitCoolingModel(CoolingModel model)
+	{
+		coolingModel = model;
+		maxTemperature = coolingModel.GetMaxHeat();
+		coolingModel.OnCoolingStateChanged += () => OnCoolingStateChanged(coolingModel.currentCoolingState);
+		OnCoolingStateChanged(coolingModel.currentCoolingState); // Initialize dissipation rate
+		mass = heatMat.mass;
+	}
+
 	void Start()
 	{
-		// If a mech with a cooling model, initialize
-		if (coolingModel != null)
-		{
-			maxTemperature = coolingModel.GetMaxHeat();
-			coolingModel.OnCoolingStateChanged += OnCoolingStateChanged;
-			OnCoolingStateChanged(coolingModel.currentCoolingState); // Initialize dissipation rate
-		}
-		else
+		if (coolingModel == null)
 		{
 			CalculateMass();
 		}
+
 		Collider[] hitColliders = Physics.OverlapSphere(transform.position, 5f);  // Radius can be adjusted
 		foreach (var hitCollider in hitColliders)
 		{
@@ -82,7 +86,7 @@ public class HeatContainer : MonoBehaviour
 		{
 			float volume = GetColliderVolume(heatCollider);
 			mass = volume * heatMat.mass; // Adjust scale for heat capacity
-																		// Debug.Log("Calculated mass for: " + heatMat.containerType + " = " + mass);
+																		//Debug.Log("Calculated mass for: " + heatMat.containerType + " = " + mass);
 
 		}
 	}
@@ -93,12 +97,18 @@ public class HeatContainer : MonoBehaviour
 		foreach (HeatContainer target in transferTargets)
 		{
 			TransferHeat(target);
-		} // Always transfer heat if there are targets
+		}
+		// Always transfer heat if there are targets
+		// if (coolingModel != null)
+		// {
+		// 	Debug.Log(dissipationRate);
+		// }
 	}
 
 	// Called when cooling state changes (for mechs)
 	private void OnCoolingStateChanged(CoolingModel.CoolingState state)
 	{
+		//Debug.Log("Changing dissipation rate");
 		if (coolingModel != null)
 		{
 			switch (state)
@@ -320,6 +330,11 @@ public class HeatContainer : MonoBehaviour
 	public float GetAirTemperature()
 	{
 		return currentAir != null ? currentAir.GetTemperature() : GetTemperature();
+	}
+
+	public float GetTemperatureRelativeToAir()
+	{
+		return currentTemperature - GetAirTemperature();
 	}
 
 	// Method to add a transfer target when entering heat transfer zone

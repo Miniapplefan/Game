@@ -12,9 +12,15 @@ public class NPCBrain : MonoBehaviour
 	private AgentBehaviour AgentBehaviour;
 	public BodyState bodyState;
 	public float currentGoalInertia;
-	public float maxInertia = 0.3f;
+	public float maxInertia = 0.2f;
 	public float lastDecisionTime = 0;
 	public List<GoalConsideration> goals;
+
+	public float ConsiderCooldownVal;
+	public float ConsiderOverheatTargetVal;
+	public float ConsiderDeploySiphonVal;
+	public float ConsiderTakeCoverVal;
+
 
 	private void Awake()
 	{
@@ -35,6 +41,11 @@ public class NPCBrain : MonoBehaviour
 
 	private void FixedUpdate()
 	{
+		ConsiderCooldownVal = ConsiderCooldownGoal();
+		ConsiderOverheatTargetVal = ConsiderOverheatTargetGoal();
+		ConsiderDeploySiphonVal = ConsiderDeploySiphonGoal();
+		ConsiderTakeCoverVal = ConsiderTakeCoverGoal();
+
 		if (bodyState.targetBodyState != null && bodyState.targetBodyState.Cooling_IsOverheated())
 		{
 			AgentBehaviour.SetGoal<OverheatHostileGoal>(false);
@@ -136,7 +147,8 @@ public class NPCBrain : MonoBehaviour
 	private float ConsiderTakeCoverGoal()
 	{
 		return NegativeWeaponsChargedConsideration()
-		* NegativeTaggingConsideration();
+		* NegativeTaggingConsideration()
+		* DeployedSiphonConsideration(1f, 0.3f);
 	}
 
 	private float ConsiderDeploySiphonGoal()
@@ -150,6 +162,7 @@ public class NPCBrain : MonoBehaviour
 		NegativeHeatConsideration()
 		* Target_HeatConsideration()
 		* DeployedSiphonConsideration(0f, 0.7f)
+		 * SiphonAmountLeftConsideration();
 		//* weaponsChargedConsideration
 		;
 	}
@@ -163,6 +176,7 @@ public class NPCBrain : MonoBehaviour
 		return NegativeHeatConsideration()
 		* WeaponsChargedConsideration()
 		* DeployedSiphonConsideration(0.5f, 1f)
+		* AwareOfHostileConsideration();
 		;
 	}
 
@@ -253,6 +267,32 @@ public class NPCBrain : MonoBehaviour
 	private float DeployedSiphonConsideration(float deployedVal, float notDeployedVal)
 	{
 		return bodyState.Siphon_isExtended() ? deployedVal : notDeployedVal;
+	}
+
+
+	/// <summary>
+	/// Determine if there is anything left to siphon 
+	/// </summary>
+	/// <returns>1 if there is still siphon left OR we haven't registered any siphon targets yet, 0 if we registered a siphon target and it has no dollars left</returns>
+	private float SiphonAmountLeftConsideration()
+	{
+		return bodyState.siphon.siphonTarget != null ? bodyState.siphon.siphonTarget.dollarsLeft > 0 ? 1 : 0 : 1;
+	}
+
+	/// <summary>
+	/// Score to determine if we have seen a hostile yet
+	/// </summary>
+	/// <returns>low value if we are not aware of a hostile, 1 if we are aware</returns>
+	private float AwareOfHostileConsideration()
+	{
+		if (bodyState.targetBodyState != null)
+		{
+			return 1f;
+		}
+		else
+		{
+			return 0.2f;
+		}
 	}
 
 	#endregion

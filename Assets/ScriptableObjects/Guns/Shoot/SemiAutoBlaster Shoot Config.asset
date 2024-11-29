@@ -23,4 +23,4 @@ MonoBehaviour:
   fireRate: 1.5
   recoil: 60
   impactForce: 800
-  heatPerShot: 100000
+  heatPerShot: 750000

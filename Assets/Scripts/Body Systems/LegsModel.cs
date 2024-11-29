@@ -16,11 +16,18 @@ public class LegsModel : SystemModel
 
 	public float taggingRecoveryRate = 0.2f;
 
-	public float taggingRecoveryRateCache = 0.2f;
+	public float taggingRecoveryRateCache = 0.4f;
 
 	public float taggingRecoveryRateRecoveryRate = 0.0001f;
 
 	public bool canMove = true;
+
+	private float tickTimer = 0f; // Timer for tracking the current tick.
+	private bool isBurstSpeed = true; // Alternates between burst and slow speed.
+	private float currentTickDuration = 0f; // Duration of the current tick.
+
+	public float minLimpSpeed = 0.5f; // Minimum speed when limping.
+	public float maxTickDuration = 0.5f; // Maximum duration of a slow tick.
 
 	public ICommand forwardCommand;
 	public ICommand backwardCommand;
@@ -81,17 +88,51 @@ public class LegsModel : SystemModel
 		}
 	}
 
-	public float getMoveSpeed()
+	public void UpdateMovementTick(float deltaTime)
 	{
-		if (canMove)
+		tickTimer += deltaTime;
+
+		// If the tick timer exceeds the current duration, toggle burst/slow and reset.
+		if (tickTimer >= currentTickDuration)
 		{
-			return (getSpeedFromLeg(rightLegHealth) + getSpeedFromLeg(leftLegHealth)) * (taggingModifier / 100f);
-		}
-		else
-		{
-			return 0f;
+			isBurstSpeed = !isBurstSpeed;
+			tickTimer = 0f;
+
+			// Recalculate the tick duration based on leg health and tagging.
+			UpdateTickDuration();
 		}
 	}
+
+	private void UpdateTickDuration()
+	{
+		// Calculate tick duration based on leg health and tagging.
+		float legHealthFactor = (getSpeedFromLeg(leftLegHealth) + getSpeedFromLeg(rightLegHealth)) / 2f;
+		currentTickDuration = legHealthFactor >= 1 && taggingModifier >= 100 ? 0 : Mathf.Lerp(0f, maxTickDuration, 1f - legHealthFactor + ((taggingModifier / 100f))); //* (100f / taggingModifier)
+	}
+
+	public float getMoveSpeed()
+	{
+		// Return different speeds based on whether it's a burst or slow tick.
+		if (!canMove)
+			return 0f;
+
+		float baseSpeed = (getSpeedFromLeg(rightLegHealth) + getSpeedFromLeg(leftLegHealth));
+		float limpModifier = (taggingModifier / 100f);
+
+		return isBurstSpeed ? baseSpeed : baseSpeed * limpModifier;
+	}
+
+	// public float getMoveSpeed()
+	// {
+	// 	if (canMove)
+	// 	{
+	// 		return (getSpeedFromLeg(rightLegHealth) + getSpeedFromLeg(leftLegHealth)) * (taggingModifier / 100f);
+	// 	}
+	// 	else
+	// 	{
+	// 		return 0f;
+	// 	}
+	// }
 
 	public void RecoverFromTagging()
 	{

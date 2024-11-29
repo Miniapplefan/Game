@@ -31,7 +31,9 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 			//Player is in range, check if we can see them
 			RaycastHit hit1;
 			Vector3 direction1 = (Colliders[0].transform.position - agent.transform.position).normalized;
-			if (Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+			//Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask)
+			//Physics.SphereCast(agent.transform.position, 0.2f, direction1, out hit1, Mathf.Infinity,AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask)
+			if (Physics.SphereCast(agent.transform.position, AttackConfig.LineOfSightSphereCastRadius, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
 				if (hit1.transform.GetComponent<PlayerController>() != null)
 				{
@@ -67,13 +69,25 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 			// 	count++;
 			// }
 
-			List<Vector3> points = new List<Vector3>();
-			float angleStep = 360f / numberOfPoints;
+			// List<Vector3> points = new List<Vector3>();
+			// float angleStep = 360f / numberOfPoints;
 
-			for (int i = 0; i < numberOfPoints; i++)
+			// for (int i = 0; i < numberOfPoints; i++)
+			// {
+			// 	float angle = i * angleStep;
+			// 	Vector3 point = agent.transform.position + new Vector3(Mathf.Cos(angle * Mathf.Deg2Rad), 0, Mathf.Sin(angle * Mathf.Deg2Rad)) * circleRadius;
+			// 	points.Add(point);
+			// }
+
+			List<Vector3> points = new List<Vector3>();
+			float lineLength = 20f; // Length of the strafing line
+			int numberOfPoints = 30; // Number of points to evaluate
+			Vector3 direction = Vector3.Cross(Vector3.up, (Colliders[0].transform.position - agent.transform.position).normalized); // Perpendicular to the player direction
+
+			for (int i = numberOfPoints - 1; i >= 0; i--) // Reverse the order
 			{
-				float angle = i * angleStep;
-				Vector3 point = agent.transform.position + new Vector3(Mathf.Cos(angle * Mathf.Deg2Rad), 0, Mathf.Sin(angle * Mathf.Deg2Rad)) * circleRadius;
+				float t = (float)i / (numberOfPoints - 1); // Normalize to range [0, 1]
+				Vector3 point = agent.transform.position + direction * (t * lineLength - lineLength / 2);
 				points.Add(point);
 			}
 
@@ -152,7 +166,8 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 	bool HasLineOfSight(Vector3 start, Vector3 end)
 	{
 		RaycastHit hit;
-		if (Physics.Raycast(start, (end - start).normalized, out hit, Mathf.Infinity))
+		//Physics.Raycast(start, (end - start).normalized, out hit, Mathf.Infinity)
+		if (Physics.SphereCast(start, AttackConfig.LineOfSightSphereCastRadius, (end - start).normalized, out hit, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 		{
 			//Debug.Log(hit.transform.GetComponent<PlayerController>() != null);
 			return hit.transform.GetComponent<PlayerController>() != null;

@@ -80,7 +80,7 @@ public class BodyController : MonoBehaviour
 		//so_initialBodyStats = (BodyInfo)Resources.Load<ScriptableObject>("PlayerStartBodyInfo");
 		systemControllers = InitSystems();
 		heatContainer = GetComponent<HeatContainer>();
-		heatContainer.coolingModel = cooling;
+		heatContainer.InitCoolingModel(cooling);
 		SubscribeSystemEvents();
 		bodyState.Init(systemControllers, heatContainer);
 		rb = GetComponent<Rigidbody>();
@@ -591,6 +591,7 @@ public class BodyController : MonoBehaviour
 		}
 		legs.DoMoveDeacceleration();
 		legs.RecoverFromTagging();
+		legs.UpdateMovementTick(Time.deltaTime);
 		weapons.RecoverFromDisruption();
 		doCooling();
 		setJointStrength();

@@ -55,8 +55,15 @@ public class AgentMoveBehavior : MonoBehaviour
 
 	private void Update()
 	{
-		NavMeshAgent.acceleration = bodyController.legs.getMoveSpeed() * (bodyController.legs.moveAcceleration / 5) * Time.deltaTime;
+		//NavMeshAgent.acceleration = bodyController.legs.getMoveSpeed() * (bodyController.legs.moveAcceleration / 5) * Time.deltaTime;
+		//NavMeshAgent.speed = 3.5f * bodyController.legs.getMoveSpeed();
+
 		NavMeshAgent.speed = 3.5f * bodyController.legs.getMoveSpeed();
+
+		// Vector3 vel = NavMeshAgent.velocity * (bodyController.legs.getMoveSpeed() / 5);
+
+		// NavMeshAgent.velocity.Set(vel.x, vel.y, vel.z);
+		// Debug.Log(NavMeshAgent.velocity);
 
 		if (CurrentTarget == null)
 		{

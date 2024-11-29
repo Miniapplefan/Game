@@ -168,7 +168,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5230095239103626758}
@@ -291,7 +291,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8875483143210849181
 Transform:
   m_ObjectHideFlags: 0
@@ -658,7 +658,7 @@ Transform:
   m_GameObject: {fileID: 4726750442635183861}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.086, y: -0.013, z: 0.178}
+  m_LocalPosition: {x: 0.086, y: -0.0278, z: 0.178}
   m_LocalScale: {x: 0.07208291, y: 0.07208291, z: 0.07208291}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1271,9 +1271,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.21
-  m_Height: 1.82
+  m_Height: 0.35081542
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.033624087, z: 0}
 --- !u!1001 &923622297159078326
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1831,6 +1831,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3408518132874653855, guid: 277d1a17dec1c4f3888e58085225ee22, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3547062910547090824}
+    - targetCorrespondingSourceObject: {fileID: 3408518132874653855, guid: 277d1a17dec1c4f3888e58085225ee22, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7415094684483460291}
     - targetCorrespondingSourceObject: {fileID: 5897900685380551696, guid: 277d1a17dec1c4f3888e58085225ee22, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6888090889440383518}
@@ -1869,11 +1872,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35efbcefeb6574d9698f67292887ef2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  heatContainer: {fileID: 0}
   rb: {fileID: 0}
   bodyHeat: 0
   bodyIsOverheated: 0
   head: {fileID: 6703837814464854943}
+  rightArm: {fileID: 6703837814464854948}
+  rightLeg: {fileID: 6703837814464854921}
+  leftLeg: {fileID: 6703837814464854932}
   targetBodyState: {fileID: 0}
+--- !u!114 &7415094684483460291
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2565961876176675113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fb954a42986f401f9410f2c68f5306b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  containerType: 2
+  heatMat: {fileID: 11400000, guid: f2a1cb1e4a614408aba5570eefb86079, type: 2}
+  currentTemperature: 0
+  maxTemperature: 10
+  specificHeatCapacity: 0
+  mass: 1
+  fluidInteractionConstant: 0
+  thermalConductivity: 0
+  currentAir: {fileID: 0}
+  ambientTemperature: 0
+  dissipationRateFromAirCurrents: 1
+  dissipationRate: 0.1
+  isInTransferZone: 0
 --- !u!4 &6703837813368935177 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5897900686198424255, guid: 277d1a17dec1c4f3888e58085225ee22, type: 3}

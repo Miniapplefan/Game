@@ -5,6 +5,7 @@ public class AttackConfigSO : ScriptableObject
 {
 	public int SensorRadius = 40;
 	public float FOVAngle = 90;
+	public float LineOfSightSphereCastRadius = 0.01f;
 	public LayerMask AttackableLayerMask;
 	public LayerMask EnvironmentalCoolingLayerMask;
 

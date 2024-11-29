@@ -47,7 +47,7 @@ public class TakeCoverAction : ActionBase<CommonData>, IInjectable
 			return ActionRunState.Stop;
 		}
 
-		if (data.bodyState.HeatContainer_getCurrentHeat() < 1)
+		if (data.bodyState.heatContainer.GetTemperatureRelativeToAir() < 1)
 		{
 			return ActionRunState.Stop;
 		}
