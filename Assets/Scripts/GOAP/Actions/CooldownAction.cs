@@ -14,17 +14,17 @@ public class CooldownAction : ActionBase<CommonData>, IInjectable
 
 	public override void Start(IMonoAgent agent, CommonData data)
 	{
-		data.Timer = Random.Range(1, 2);
+		data.Timer = Random.Range(5, 6);
 	}
 
 	public override ActionRunState Perform(IMonoAgent agent, CommonData data, ActionContext context)
 	{
 		data.Timer -= context.DeltaTime;
 
-		// if (data.Timer > 0)
-		// {
-		//   return ActionRunState.Continue;
-		// }
+		if (data.bodyState.heatContainer.GetTemperatureRelativeToAir() < 1)
+		{
+			return ActionRunState.Stop;
+		}
 
 		if (data.Timer > 0)
 		{
@@ -34,20 +34,15 @@ public class CooldownAction : ActionBase<CommonData>, IInjectable
 		bool seePlayer = false;
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
-			Vector3 direction1 = (Colliders[0].transform.position - agent.transform.position).normalized;
+			Vector3 direction1 = (Colliders[0].transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
 			RaycastHit hit1;
-			if (Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+			if (Physics.Raycast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
 				seePlayer = hit1.transform.GetComponent<PlayerController>() != null;
 			}
 		}
 
 		if (seePlayer)
-		{
-			return ActionRunState.Stop;
-		}
-
-		if (data.bodyState.heatContainer.GetTemperatureRelativeToAir() < 1)
 		{
 			return ActionRunState.Stop;
 		}

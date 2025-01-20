@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using static BodyInfo;
@@ -26,6 +27,8 @@ public class BodyController : MonoBehaviour
 
 	public GameObject taggingGauge;
 	Vector3 taggingGaugeScaleCache;
+	public TMP_Text dollarsIndicator;
+	public TMP_Text healthIndicator;
 
 	HeadModel head;
 
@@ -43,11 +46,46 @@ public class BodyController : MonoBehaviour
 	SiphonModel siphon;
 	public Transform siphonHead;
 
+	public Transform siphonArm;
+
 	List<SystemModel> systemControllers;
 	public Rigidbody rb;
 	public Rigidbody ragdollCore;
 	public GameObject headObject;
 	public GameObject aimCam;
+
+	public float repairDelay = 50f;
+	private Dictionary<RepairTarget, float> damagedLimbs = new Dictionary<RepairTarget, float>();
+	private List<RepairTarget> toRepair = new List<RepairTarget>();
+
+	public class RepairTarget
+	{
+		public SystemModel system { get; private set; }
+		public LimbID specificLimb { get; private set; }
+
+		public RepairTarget(SystemModel s, LimbID l = LimbID.none)
+		{
+			system = s;
+			specificLimb = l;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is RepairTarget other)
+			{
+				return system == other.system && specificLimb == other.specificLimb;
+			}
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			int hash = system.GetHashCode();
+			if (specificLimb != LimbID.none)
+				hash = hash * 31 + specificLimb.GetHashCode();
+			return hash;
+		}
+	}
 
 	public ConfigurableJoint upperTorsoJoint;
 	public ConfigurableJoint middleTorsoJoint;
@@ -102,6 +140,7 @@ public class BodyController : MonoBehaviour
 
 		coolingGaugeScaleCache = coolingGauge.transform.localScale;
 		taggingGaugeScaleCache = taggingGauge.transform.localScale;
+		healthIndicator.text = head.health.ToString();
 	}
 
 	List<SystemModel> InitSystems()
@@ -138,7 +177,7 @@ public class BodyController : MonoBehaviour
 					Debug.Log("Head added");
 					break;
 				case BodyInfo.systemID.Siphon:
-					siphon = new SiphonModel(so_initialBodyStats.rawSystemStartLevels[i], siphonHead);
+					siphon = new SiphonModel(so_initialBodyStats.rawSystemStartLevels[i], siphonHead, siphonArm);
 					models.Add(siphon);
 					Debug.Log("Siphon added");
 					break;
@@ -197,6 +236,7 @@ public class BodyController : MonoBehaviour
 		if (i.limb.specificLimb == Limb.LimbID.none)
 		{
 			GetSystem(i.limb.linkedSystem).Damage(1);
+			checkForRepair(i);
 		}
 		else
 		{
@@ -204,14 +244,78 @@ public class BodyController : MonoBehaviour
 			{
 				case LimbID.leftLeg:
 					legs.damageLeftLeg(1);
+					checkForRepair(i);
 					break;
 				case LimbID.rightLeg:
 					legs.damageRightLeg(1);
+					checkForRepair(i);
 					break;
 				case LimbID.head:
-					head.Damage((int)i.amount);
+					//head.Damage((int)i.amount);
 					break;
 			}
+		}
+	}
+
+	void checkForRepair(DamageInfo i)
+	{
+		RepairTarget target;
+		target = new RepairTarget(GetSystem(i.limb.linkedSystem), i.limb.specificLimb);
+		if (!damagedLimbs.ContainsKey(target))
+		{
+			damagedLimbs.Add(target, Time.time + repairDelay);
+		}
+		else
+		{
+			// Reset timer if already damaged
+			damagedLimbs[target] = Time.time + repairDelay;
+		}
+	}
+
+	public void doLimbRepairs()
+	{
+		foreach (var entry in damagedLimbs)
+		{
+			SystemModel limb = entry.Key.system;
+			float repairTime = entry.Value;
+
+			if (Time.time >= repairTime)
+			{
+				if (entry.Key.specificLimb == Limb.LimbID.none)
+				{
+					limb.Repair(1);
+				}
+				else
+				{
+					switch (entry.Key.specificLimb)
+					{
+						case LimbID.leftLeg:
+							legs.healLeftLeg(1);
+							break;
+						case LimbID.rightLeg:
+							legs.healRightLeg(1);
+							break;
+						case LimbID.head:
+							head.Repair(1);
+							break;
+					}
+				}
+				if (limb.currentLevelWithoutDamage == limb.currentLevel || legs.leftLegHealth == limb.currentLevel || legs.rightLegHealth == limb.currentLevel)
+				{
+					//Debug.Log("Repaired " + limb.name);
+					toRepair.Add(entry.Key);
+				}
+			}
+			else
+			{
+				//Debug.Log("Time current: " + Time.time + " Time of repair: " + repairTime);
+			}
+		}
+
+		// Remove fully repaired limbs
+		foreach (RepairTarget limb in toRepair)
+		{
+			damagedLimbs.Remove(limb);
 		}
 	}
 
@@ -316,6 +420,13 @@ public class BodyController : MonoBehaviour
 		weapon3gauge.SetActive(weapons.GetCurrentPowerAllocationDictionary()[2]);
 
 		//weapons.PrintPowerAllocation(weapons.GetCurrentPowerAllocation());
+	}
+
+	private void setWeaponGauges()
+	{
+		weapon1gauge.SetActive(weapons.GetCurrentPowerAllocationDictionary()[0] && weapons.guns[0].isCharged());
+		weapon2gauge.SetActive(weapons.GetCurrentPowerAllocationDictionary()[1] && weapons.guns[1].isCharged());
+		weapon3gauge.SetActive(weapons.GetCurrentPowerAllocationDictionary()[2] && weapons.guns[2].isCharged());
 	}
 
 	private void DoRotation()
@@ -510,7 +621,7 @@ public class BodyController : MonoBehaviour
 
 	private void setJointStrength()
 	{
-		float overheated = cooling.isOverheated ? 0.2f : 1f;
+		float overheated = cooling.isOverheated ? 0.1f : 1f;
 
 		tempJoint = upperTorsoJoint.slerpDrive;
 		tempJoint.positionSpring = (legs.taggingModifier / 100f * 100000 * overheated) + 1000;
@@ -530,7 +641,7 @@ public class BodyController : MonoBehaviour
 
 	private void SetRigPosture()
 	{
-		float posture = legs.taggingModifier / 100;
+		float posture = bodyState.Cooling_IsOverheated() ? 0.001f : legs.taggingModifier / 100;
 
 		upperTorsoMac.data.sourceObjects.SetWeight(0, posture);
 		upperTorsoMac.data.sourceObjects.SetWeight(1, 1 - posture);
@@ -588,6 +699,7 @@ public class BodyController : MonoBehaviour
 		{
 			ExecutePhysicsBasedInputs();
 			doSiphoning();
+			doLimbRepairs();
 		}
 		legs.DoMoveDeacceleration();
 		legs.RecoverFromTagging();
@@ -597,6 +709,9 @@ public class BodyController : MonoBehaviour
 		setJointStrength();
 		SetRigPosture();
 
+		setWeaponGauges();
+		dollarsIndicator.text = (Mathf.Round(siphon.dollars * 100f) / 100f).ToString();
+		healthIndicator.text = head.health.ToString();
 		// if (isAI)
 		// {
 		// 	Debug.Log(legs.taggingModifier);

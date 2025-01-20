@@ -52,7 +52,7 @@ public class GoapSetConfigFactory : GoapSetFactoryBase
 		builder.AddAction<DeploySiphonAction>()
 		.SetTarget<SiphonableTarget>()
 		.AddEffect<IsSiphonDeployed>(EffectType.Increase)
-		.SetBaseCost(3)
+		.SetBaseCost(4)
 		.SetInRange(2);
 
 		builder.AddAction<OverheatHostileAction>()
@@ -65,12 +65,13 @@ public class GoapSetConfigFactory : GoapSetFactoryBase
 		builder.AddAction<CooldownAction>()
 		 .SetTarget<CooldownTarget>()
 		 .AddEffect<IsOverheated>(EffectType.Decrease)
-		 .SetBaseCost(2)
+		 .SetBaseCost(8)
 		 .SetInRange(40);
 
 		builder.AddAction<TakeCoverAction>()
 		.SetTarget<CoverTarget>()
 		.AddEffect<IsInHostileLineOfSight>(EffectType.Decrease)
+		.SetMoveMode(ActionMoveMode.PerformWhileMoving)
 		.SetBaseCost(2)
 		.SetInRange(40);
 	}

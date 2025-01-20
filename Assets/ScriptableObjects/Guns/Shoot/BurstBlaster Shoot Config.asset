@@ -16,11 +16,15 @@ MonoBehaviour:
   HitMask:
     serializedVersion: 2
     m_Bits: 576
-  Spread: {x: 0, y: 0, z: 0}
+  Spread: {x: 0.02, y: 0.02, z: 0}
+  maxRange: 100
   isBurst: 1
-  burst_numShots: 3
+  burst_numShots: 6
   burst_delayBetweenShots: 0.2
-  fireRate: 1
-  recoil: 50
-  impactForce: 400
-  heatPerShot: 300000
+  bulletsPerShot: 1
+  fireRate: 6
+  recoil: 30
+  impactForce: 100
+  marchingCubesDamage: 1
+  heatPerShot: 800000
+  hitParticles: {fileID: 9056568595549153658, guid: d62a75f2eddd043b4ab15b49376c3560, type: 3}

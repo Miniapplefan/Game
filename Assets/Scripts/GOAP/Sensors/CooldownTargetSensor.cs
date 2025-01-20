@@ -53,7 +53,7 @@ public class CooldownTargetSensor : LocalTargetSensorBase, IInjectable
 			for (int i = 0; i < EnvironmentalCoolingColliders.Length; i++)
 			{
 				Collider environmentalCollider = EnvironmentalCoolingColliders[i];
-				if (environmentalCollider == null)
+				if (environmentalCollider == null || environmentalCollider.gameObject.activeSelf == false)
 				{
 					continue;
 				}
@@ -104,8 +104,8 @@ public class CooldownTargetSensor : LocalTargetSensorBase, IInjectable
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
 			RaycastHit hit1;
-			Vector3 direction1 = (Colliders[0].transform.position - agent.transform.position).normalized;
-			if (Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+			Vector3 direction1 = (Colliders[0].transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
+			if (Physics.Raycast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
 				if (hit1.transform.GetComponent<PlayerController>() != null)
 				{

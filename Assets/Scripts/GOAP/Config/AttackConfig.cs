@@ -8,6 +8,7 @@ public class AttackConfigSO : ScriptableObject
 	public float LineOfSightSphereCastRadius = 0.01f;
 	public LayerMask AttackableLayerMask;
 	public LayerMask EnvironmentalCoolingLayerMask;
+	public Vector3 EyeLevel = new Vector3(0, 2.33f, 0);
 
 	public LayerMask SiphonableLayerMask;
 	[Tooltip("Lower is a better hiding spot")]
@@ -19,5 +20,4 @@ public class AttackConfigSO : ScriptableObject
 	public float AttackDelay = 1;
 	public int AttackCost = 4;
 	public float SiphonDelay = 1;
-
 }

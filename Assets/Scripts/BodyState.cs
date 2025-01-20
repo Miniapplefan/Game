@@ -6,6 +6,7 @@ using System.Linq;
 public class BodyState : MonoBehaviour
 {
 	public HeatContainer heatContainer;
+	public HeadModel head;
 	public CoolingModel cooling;
 	private LegsModel legs;
 	private SensorsModel sensors;
@@ -16,22 +17,27 @@ public class BodyState : MonoBehaviour
 	public float bodyHeat;
 	public bool bodyIsOverheated;
 
-	public Collider head;
+	public Collider headCollider;
 
 	public Collider rightArm;
 	public Collider rightLeg;
 
 	public Collider leftLeg;
 
+	public GameObject positionTracker;
+
 	public BodyState targetBodyState;
 
 	public SiphonTarget siphonTarget;
+
+	public LayerMask ObstructionLayerMask;
 
 	public void Init(List<SystemModel> systems, HeatContainer heat)
 	{
 		heatContainer = heat;
 
 		cooling = systems.OfType<CoolingModel>().FirstOrDefault();
+		head = systems.OfType<HeadModel>().FirstOrDefault();
 		legs = systems.OfType<LegsModel>().FirstOrDefault();
 		sensors = systems.OfType<SensorsModel>().FirstOrDefault();
 		weapons = systems.OfType<WeaponsModel>().FirstOrDefault();
@@ -143,6 +149,11 @@ public class BodyState : MonoBehaviour
 		return weapons.guns[0].isFiringBurst || weapons.guns[1].isFiringBurst || weapons.guns[2].isFiringBurst;
 	}
 
+	public bool Weapons_currentlyFiring()
+	{
+		return weapons.guns[0].isFiring || weapons.guns[1].isFiring || weapons.guns[2].isFiring;
+	}
+
 	public int Sensors_getSystemHealth()
 	{
 		return sensors.currentLevel;
@@ -157,4 +168,25 @@ public class BodyState : MonoBehaviour
 	{
 		return siphon.extended;
 	}
+
+	public bool Siphon_haveLOS()
+	{
+		bool haveLOS = false;
+		if (siphonTarget == null)
+		{
+			return haveLOS;
+		}
+		Vector3 direction1 = (siphonTarget.transform.position - headCollider.transform.position).normalized;
+		RaycastHit hit1;
+
+		if (Physics.SphereCast(headCollider.transform.position, 0.02f, direction1, out hit1, Mathf.Infinity, siphon.siphonLayerMask | ObstructionLayerMask))
+		{
+			//Debug.Log(agent.transform.position);
+			haveLOS = hit1.transform.GetComponent<SiphonTarget>() != null;
+		}
+		return haveLOS;
+	}
+	#region AI data
+	public Gun desiredGunToUse;
+	#endregion
 }

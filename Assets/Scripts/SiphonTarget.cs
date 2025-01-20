@@ -10,6 +10,7 @@ public class SiphonTarget : MonoBehaviour
 	public SiphonModel siphoner;
 
 	public GameObject dollarsLeftIndicator;
+	public LineRenderer siphonerLine;
 
 	public Material targeted;
 	public Material idle;
@@ -20,6 +21,9 @@ public class SiphonTarget : MonoBehaviour
 	{
 		dollarsLeft = dollarAmount;
 		scaleCache = dollarsLeftIndicator.transform.localScale;
+		siphonerLine.positionCount = 2; // A line has two points
+		siphonerLine.startWidth = 0.2f; // Adjust the line width as needed
+		siphonerLine.endWidth = 0.1f;
 	}
 
 	// Update is called once per frame
@@ -33,19 +37,40 @@ public class SiphonTarget : MonoBehaviour
 				dollarsLeft -= Time.deltaTime * dollarsPerSecond * siphoner.getSiphoningRate();
 				dollarsLeftIndicator.transform.localScale = scaleCache * (dollarsLeft / dollarAmount);
 				//Debug.Log(siphoner.dollars);
+				DrawLine(dollarsLeftIndicator.transform.position, siphoner.head.gameObject.transform.position);
 			}
 		}
 	}
 
-	public void beingSiphoned()
+	public void beingSiphoned(SiphonModel siphonModel)
 	{
 		//this.GetComponent<MeshRenderer>().material = targeted;
 		dollarsLeftIndicator.GetComponent<MeshRenderer>().material = targeted;
+		siphonModel.extended = true;
+		siphonModel.siphonTarget = this;
+		siphoner = siphonModel;
 	}
 
-	public void notBeingSiphoned()
+	public void notBeingSiphoned(SiphonModel siphonModel)
 	{
 		this.GetComponent<MeshRenderer>().material = idle;
 		dollarsLeftIndicator.GetComponent<MeshRenderer>().material = idle;
+		DrawLine(transform.position, transform.position);
+		if (siphoner != null)
+		{
+			siphoner.extended = false;
+			siphoner.siphonTarget = null;
+		}
+
+		siphonModel.extended = false;
+		siphonModel.siphonTarget = null;
+		siphoner = null;
+	}
+
+	public void DrawLine(Vector3 startPosition, Vector3 endPosition)
+	{
+		// Set the positions of the LineRenderer
+		siphonerLine.SetPosition(0, startPosition);
+		siphonerLine.SetPosition(1, endPosition);
 	}
 }

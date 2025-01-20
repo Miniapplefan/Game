@@ -20,6 +20,10 @@ public class DeploySiphonAction : ActionBase<AttackData>, IInjectable
 	public override ActionRunState Perform(IMonoAgent agent, AttackData data, ActionContext context)
 	{
 		data.Timer -= context.DeltaTime;
+		if (agent.GetComponentInChildren<BodyState>().siphon.extended)
+		{
+			data.AIController.pressingSiphon = false;
+		}
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.SiphonableLayerMask) > 0)
 		{
 			data.AIController.SetAimTarget(Colliders[0].transform.position);
@@ -27,7 +31,7 @@ public class DeploySiphonAction : ActionBase<AttackData>, IInjectable
 		}
 
 		bool shouldDeploy = Vector3.Distance(agent.transform.position, Colliders[0].transform.position) < 2f;
-		if (shouldDeploy)
+		if (shouldDeploy && !agent.GetComponentInChildren<BodyState>().siphon.extended)
 		{
 			//Debug.Log(Vector3.Distance(agent.transform.position, Colliders[0].transform.position));
 			data.AIController.pressingSiphon = true;

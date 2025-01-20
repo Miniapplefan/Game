@@ -7,6 +7,17 @@ public class AirCurrentGenerator : MonoBehaviour
 	public float baseDissipationRate = 10f;  // Cooling rate of the fan
 	public float maxCoolingDistance = 10f;  // Max distance for fan's effect (length of the cooling zone)
 	public float coolingZoneRadius = 5f;    // Radius for the cooling zone
+	public float minTimeOn = 2f;
+	public float maxTimeOn = 6f;
+	public float minTimeOff = 10f;
+	public float maxTimeOff = 20f;
+	private float currentTimeOn;
+	private float currentTimeOff;
+	public bool isOn;
+	//public bool isCoolingSomething;
+	private IEnumerator currentCoroutine;
+
+	public GameObject fanBlades;
 	public LayerMask heatContainerLayerMask;  // LayerMask to filter only HeatContainers
 	public LayerMask obstructionLayerMask;    // Define the layers that can block the cooling effect (e.g., environment, other containers)
 	private HeatContainer currentHeatContainer = null;  // The container currently affected by the fan
@@ -19,6 +30,42 @@ public class AirCurrentGenerator : MonoBehaviour
 	{
 		// Create the cooling zone dynamically
 		CreateCoolingZone();
+		float rand = Random.Range(0f, 1f);
+		if (rand > 0.5)
+		{
+			currentTimeOn = Random.Range(minTimeOn, maxTimeOn);
+			currentCoroutine = StayPoweredOn(currentTimeOn);
+			StartCoroutine(currentCoroutine);
+		}
+		else
+		{
+			currentTimeOff = Random.Range(minTimeOff, maxTimeOff);
+			currentCoroutine = StayPoweredOff(currentTimeOff);
+			StartCoroutine(currentCoroutine);
+		}
+	}
+
+	private void Update()
+	{
+		if (isOn)
+		{
+			coolingZoneObject.SetActive(true);
+			DoFanBladeAnimation();
+		}
+		else
+		{
+			ResetDissipationRate();
+			coolingZoneObject.SetActive(false);
+		}
+		// if(currentHeatContainer != null)
+		// {
+		// 	isCoolingSomething = true;
+		// }
+	}
+
+	private void DoFanBladeAnimation()
+	{
+		fanBlades.transform.Rotate(0.0f, 10f, 0f, Space.Self);
 	}
 
 	private void CreateCoolingZone()
@@ -81,11 +128,16 @@ public class AirCurrentGenerator : MonoBehaviour
 
 	public bool IsPathClear()
 	{
+		if (currentHeatContainer == null)
+		{
+			return false;
+		}
+
 		RaycastHit hit;
-		Vector3 directionToContainer = (currentHeatContainer.transform.position - transform.position).normalized;
+		Vector3 directionToContainer = (currentHeatContainer.transform.position - fanBlades.transform.position).normalized;
 
 		// Perform the raycast (using the obstructionLayerMask to detect only certain objects)
-		if (Physics.Raycast(transform.position, directionToContainer, out hit, maxCoolingDistance, obstructionLayerMask | heatContainerLayerMask))
+		if (Physics.Raycast(fanBlades.transform.position, directionToContainer, out hit, maxCoolingDistance, obstructionLayerMask | heatContainerLayerMask))
 		{
 			// Check if the object hit is NOT the HeatContainer, indicating an obstruction
 			if (hit.collider.gameObject != currentHeatContainer.gameObject)
@@ -100,14 +152,17 @@ public class AirCurrentGenerator : MonoBehaviour
 
 	public void ApplyCoolingEffect(HeatContainer container)
 	{
-		float distanceToFan = Vector3.Distance(transform.position, container.transform.position);
-		if (distanceToFan <= maxCoolingDistance)
+		if (isOn)
 		{
-			float coolingFactor = Mathf.Clamp01(1 - (distanceToFan / maxCoolingDistance));
-			float adjustedDissipationRate = baseDissipationRate * coolingFactor;
-			// Debug.Log("original " + originalDissipationRate);
-			// Debug.Log("with fan " + originalDissipationRate + adjustedDissipationRate);
-			container.dissipationRateFromAirCurrents = originalDissipationRate + adjustedDissipationRate;
+			float distanceToFan = Vector3.Distance(transform.position, container.transform.position);
+			if (distanceToFan <= maxCoolingDistance)
+			{
+				float coolingFactor = Mathf.Clamp01(1 - (distanceToFan / maxCoolingDistance));
+				float adjustedDissipationRate = baseDissipationRate * coolingFactor;
+				// Debug.Log("original " + originalDissipationRate);
+				// Debug.Log("with fan " + originalDissipationRate + adjustedDissipationRate);
+				container.dissipationRateFromAirCurrents = originalDissipationRate + adjustedDissipationRate;
+			}
 		}
 	}
 
@@ -117,5 +172,25 @@ public class AirCurrentGenerator : MonoBehaviour
 		{
 			currentHeatContainer.dissipationRateFromAirCurrents = originalDissipationRate;
 		}
+	}
+
+	private IEnumerator StayPoweredOff(float time)
+	{
+		isOn = false;
+		yield return new WaitForSeconds(time);
+		isOn = true;
+		currentTimeOn = Random.Range(minTimeOn, maxTimeOn);
+		currentCoroutine = StayPoweredOn(currentTimeOn);
+		StartCoroutine(currentCoroutine);
+	}
+
+	private IEnumerator StayPoweredOn(float time)
+	{
+		isOn = true;
+		yield return new WaitForSeconds(time);
+		isOn = false;
+		currentTimeOff = Random.Range(minTimeOff, maxTimeOff);
+		currentCoroutine = StayPoweredOff(currentTimeOff);
+		StartCoroutine(currentCoroutine);
 	}
 }

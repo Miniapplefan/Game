@@ -43,7 +43,7 @@ public class MarchingCubesGenerator : MonoBehaviour
 		int yVertices = Mathf.CeilToInt(dimensions.y / resolution) + 2;
 		int zVertices = Mathf.CeilToInt(dimensions.z / resolution) + 2;
 
-		Debug.Log(xVertices);
+		//Debug.Log(xVertices);
 
 		vertexMatrix = new Vector3[xVertices, yVertices, zVertices];
 
@@ -348,7 +348,7 @@ public class MarchingCubesGenerator : MonoBehaviour
 			{
 				scalarField[point.x, point.y, point.z] = 0;
 				damageCount++;
-				Debug.Log(damageCount);
+				//				Debug.Log(damageCount);
 				allZero = false;
 			}
 		}
@@ -358,7 +358,7 @@ public class MarchingCubesGenerator : MonoBehaviour
 		{
 			scalarField[closestNonZeroPoint.x, closestNonZeroPoint.y, closestNonZeroPoint.z] = 0;
 			damageCount++;
-			Debug.Log(damageCount);
+			//			Debug.Log(damageCount);
 		}
 
 		// Regenerate the mesh to reflect changes

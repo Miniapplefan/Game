@@ -12,7 +12,7 @@ public class NPCBrain : MonoBehaviour
 	private AgentBehaviour AgentBehaviour;
 	public BodyState bodyState;
 	public float currentGoalInertia;
-	public float maxInertia = 0.2f;
+	public float maxInertia = 0.5f;
 	public float lastDecisionTime = 0;
 	public List<GoalConsideration> goals;
 
@@ -77,25 +77,25 @@ public class NPCBrain : MonoBehaviour
 				GoalConsideration chosenGoal = GetHighestConsiderationGoal(goals);
 				switch (chosenGoal.goal)
 				{
-					case CooldownGoal:
-						AgentBehaviour.SetGoal<CooldownGoal>(chosenGoal.cancelable);
-						currentGoalInertia = maxInertia;
-						break;
 					case OverheatHostileGoal:
 						AgentBehaviour.SetGoal<OverheatHostileGoal>(chosenGoal.cancelable);
-						currentGoalInertia = maxInertia;
-						break;
-					case DeploySiphonGoal:
-						AgentBehaviour.SetGoal<DeploySiphonGoal>(chosenGoal.cancelable);
-						currentGoalInertia = maxInertia;
+						currentGoalInertia = chosenGoal.Consideration();
 						break;
 					case TakeCoverGoal:
 						AgentBehaviour.SetGoal<TakeCoverGoal>(chosenGoal.cancelable);
-						currentGoalInertia = maxInertia;
+						currentGoalInertia = chosenGoal.Consideration();
+						break;
+					case DeploySiphonGoal:
+						AgentBehaviour.SetGoal<DeploySiphonGoal>(chosenGoal.cancelable);
+						currentGoalInertia = chosenGoal.Consideration();
+						break;
+					case CooldownGoal:
+						AgentBehaviour.SetGoal<CooldownGoal>(chosenGoal.cancelable);
+						currentGoalInertia = chosenGoal.Consideration();
 						break;
 					default:
 						Debug.Log("AI Defaulting");
-						AgentBehaviour.SetGoal<CooldownGoal>(chosenGoal.cancelable);
+						AgentBehaviour.SetGoal<TakeCoverGoal>(chosenGoal.cancelable);
 						break;
 				}
 			}
@@ -134,35 +134,57 @@ public class NPCBrain : MonoBehaviour
 				currentGoal.Consideration() > maxGoal.Consideration() ? currentGoal : maxGoal);
 	}
 
+	private float FormatConsiderationVal(float val)
+	{
+		return Mathf.Round(Mathf.Clamp01(val) * 100f) / 100f;
+	}
+
 	private float ConsiderCooldownGoal()
 	{
 		float heatConsideration = Mathf.Pow((bodyState.HeatContainer_getCurrentHeat() / bodyState.cooling.GetMaxHeat()), 3);
 		float weaponsChargedConsideration = bodyState.Weapons_numWeaponsCharged() == 0 ? 1 : 1 / bodyState.Weapons_numWeaponsCharged();
 
-		return PositiveHeatConsideration()
+		return FormatConsiderationVal(
+
+		PositiveHeatConsideration(0.7f)
+		// * FarFromTargetConsideration()
+		);
 		//* weaponsChargedConsideration
 		;
 	}
 
 	private float ConsiderTakeCoverGoal()
 	{
-		return NegativeWeaponsChargedConsideration()
-		* NegativeTaggingConsideration()
-		* DeployedSiphonConsideration(1f, 0.3f);
+		return FormatConsiderationVal(
+		// NegativeWeaponsChargedConsideration() *
+		NegativeTaggingConsideration()
+		* DeployedSiphonConsideration(1f, 0.5f)
+		);
 	}
 
 	private float ConsiderDeploySiphonGoal()
 	{
-		float heatConsideration = -(Mathf.Pow((bodyState.HeatContainer_getCurrentHeat() / bodyState.cooling.GetMaxHeat()), 3)) + 1;
-		float target_heatConsideration = Mathf.Pow((bodyState.HeatContainer_getCurrentHeat() / bodyState.cooling.GetMaxHeat()), 2);
-		float deployedConsideration = bodyState.Siphon_isExtended() ? 0 : 1;
-		float weaponsChargedConsideration = bodyState.Weapons_numWeaponsCharged() == 0 ? 1 : 1 / bodyState.Weapons_numWeaponsCharged();
+		float distConsideration;
+		// if (TargetFarFromSiphonConsideration() > 20)
+		// {
+		// 	distConsideration = TargetFarFromSiphonConsideration() * Target_HeatConsideration(3);
+		// 	Debug.Log("Far away: " + distConsideration);
+		// }
+		// else
+		// {
+		// 	distConsideration = TargetFarFromSiphonConsideration() * Target_HeatConsideration(5) * TargetDoesNotHaveLOSToSiphon();
+		// 	Debug.Log("Close: " + distConsideration);
+		// }
+		distConsideration = TargetFarFromSiphonConsideration() * Target_HeatConsideration(5) * TargetDoesNotHaveLOSToSiphon();
 
-		return
-		NegativeHeatConsideration()
-		* Target_HeatConsideration()
-		* DeployedSiphonConsideration(0f, 0.7f)
-		 * SiphonAmountLeftConsideration();
+
+		return FormatConsiderationVal(
+		NegativeHeatConsideration() *
+		DeployedSiphonConsideration(0f, 1.70f) *
+		distConsideration *
+		CloseToSiphonConsideration()
+		* SiphonAmountLeftConsideration()
+		);
 		//* weaponsChargedConsideration
 		;
 	}
@@ -173,15 +195,22 @@ public class NPCBrain : MonoBehaviour
 		float weaponsChargedConsideration = bodyState.Weapons_numWeaponsCharged() == 0 ? 0 : bodyState.Weapons_numWeaponsCharged() / 3;
 		// float target_heatConsideration = Mathf.Clamp(Mathf.Pow((bodyState.Cooling_getCurrentHeat() / bodyState.cooling.getMaxHeat()), 2), 0.8f, 1f);
 
-		return NegativeHeatConsideration()
-		* WeaponsChargedConsideration()
-		* DeployedSiphonConsideration(0.5f, 1f)
-		* AwareOfHostileConsideration();
+		return FormatConsiderationVal(
+		NegativeHeatConsideration() *
+		// WeaponsChargedConsideration() *
+		DeployedSiphonConsideration(0.7f, 1f) *
+		CloseToTargetConsideration()
+		* AwareOfHostileConsideration()
+		);
 		;
 	}
 
-	#region Considerations
+	#region ----**** Considerations ****----
 
+	private float HealthConsideration()
+	{
+		return bodyState.head.health / bodyState.head.getMaxHealth();
+	}
 
 	/// <summary>
 	/// High score for low heat, low score for high heat, considering ambient temperature as the minimum possible heat
@@ -203,7 +232,7 @@ public class NPCBrain : MonoBehaviour
 	/// High score for high heat, low score for low heat, considering ambient temperature as the minimum possible heat
 	/// </summary>
 	/// <returns>float between 0 and 1</returns>
-	private float PositiveHeatConsideration()
+	private float PositiveHeatConsideration(float threshold = 0.8f)
 	{
 		float currentHeat = bodyState.HeatContainer_getCurrentHeat();
 		float maxHeat = bodyState.cooling.GetMaxHeat();
@@ -211,8 +240,16 @@ public class NPCBrain : MonoBehaviour
 
 		// Ensure we are not trying to cool below the ambient temperature
 		float normalizedHeat = (currentHeat - ambientTemperature) / (maxHeat - ambientTemperature);
+		//Debug.Log(normalizedHeat);
+		if (normalizedHeat > threshold)
+		{
+			return Mathf.Pow(normalizedHeat, 3);
+		}
+		else
+		{
+			return 0;
+		}
 		//Debug.Log(bodyState.heatContainer.GetAirTemperature());
-		return Mathf.Pow(normalizedHeat, 3);
 	}
 
 	/// <summary>
@@ -221,7 +258,7 @@ public class NPCBrain : MonoBehaviour
 	/// <returns>float between 0 and 1</returns>
 	private float NegativeTaggingConsideration()
 	{
-		return -(Mathf.Pow((bodyState.Legs_getTaggingHealth() / 100), 3)) + 1;
+		return -(Mathf.Pow((bodyState.Legs_getTaggingHealth() / 100), 2)) + 1;
 	}
 
 	/// <summary>
@@ -247,12 +284,12 @@ public class NPCBrain : MonoBehaviour
 	/// High score for target having high heat, low score for target having low heat
 	/// </summary>
 	/// <returns>float between 0 and 1</returns>
-	private float Target_HeatConsideration()
+	private float Target_HeatConsideration(int exp = 8)
 	{
 		if (bodyState.targetBodyState != null)
 		{
 			//Debug.Log(Mathf.Pow((bodyState.targetBodyState.HeatContainer_getCurrentHeat() - bodyState.heatContainer.GetAirTemperature()) / (bodyState.targetBodyState.cooling.GetMaxHeat() - bodyState.heatContainer.GetAirTemperature()), 8));
-			return Mathf.Pow((bodyState.targetBodyState.HeatContainer_getCurrentHeat() - bodyState.heatContainer.GetAirTemperature()) / (bodyState.targetBodyState.cooling.GetMaxHeat() - bodyState.heatContainer.GetAirTemperature()), 8);
+			return Mathf.Pow((bodyState.targetBodyState.HeatContainer_getCurrentHeat() - bodyState.heatContainer.GetAirTemperature()) / (bodyState.targetBodyState.cooling.GetMaxHeat() - bodyState.heatContainer.GetAirTemperature()), exp);
 		}
 		else
 		{
@@ -276,7 +313,7 @@ public class NPCBrain : MonoBehaviour
 	/// <returns>1 if there is still siphon left OR we haven't registered any siphon targets yet, 0 if we registered a siphon target and it has no dollars left</returns>
 	private float SiphonAmountLeftConsideration()
 	{
-		return bodyState.siphon.siphonTarget != null ? bodyState.siphon.siphonTarget.dollarsLeft > 0 ? 1 : 0 : 1;
+		return bodyState.siphon.siphonTarget != null ? bodyState.siphon.siphonTarget.dollarsLeft > 1 ? 1 : 0 : 1;
 	}
 
 	/// <summary>
@@ -292,6 +329,70 @@ public class NPCBrain : MonoBehaviour
 		else
 		{
 			return 0.2f;
+		}
+	}
+
+	private float CloseToTargetConsideration()
+	{
+		if (bodyState.targetBodyState != null)
+		{
+			return 10 / Vector3.Distance(bodyState.targetBodyState.gameObject.transform.position, bodyState.gameObject.transform.position);
+		}
+		else
+		{
+			return 1f;
+		}
+	}
+
+	private float FarFromTargetConsideration()
+	{
+		if (bodyState.targetBodyState != null)
+		{
+			return Vector3.Distance(bodyState.targetBodyState.gameObject.transform.position, bodyState.gameObject.transform.position) / 10;
+		}
+		else
+		{
+			return 1f;
+		}
+	}
+
+	private float TargetFarFromSiphonConsideration()
+	{
+		if (bodyState.targetBodyState != null && bodyState.siphonTarget != null)
+		{
+			return Vector3.Distance(bodyState.targetBodyState.gameObject.transform.position, bodyState.siphonTarget.gameObject.transform.position) * 2;
+		}
+		else
+		{
+			return 1f;
+		}
+	}
+
+	private float CloseToSiphonConsideration()
+	{
+		if (bodyState.siphon.siphonTarget != null)
+		{
+			return 10 / Vector3.Distance(bodyState.gameObject.transform.position, bodyState.siphonTarget.gameObject.transform.position) * 2;
+		}
+		else
+		{
+			return 1f;
+		}
+	}
+
+	private float TargetDoesNotHaveLOSToSiphon()
+	{
+		if (bodyState.targetBodyState == null)
+		{
+			return 1f;
+		}
+		if (bodyState.targetBodyState.Siphon_haveLOS())
+		{
+			return 0.5f;
+		}
+		else
+		{
+			return 1.5f;
 		}
 	}
 

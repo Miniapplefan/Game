@@ -1,5 +1,7 @@
 public enum GunType
 {
-    SemiAutoBlaster,
-    BurstBlaster
+	SemiAutoBlaster,
+	BurstBlaster,
+	ShotgunBlaster,
+	ChargeHeater
 }

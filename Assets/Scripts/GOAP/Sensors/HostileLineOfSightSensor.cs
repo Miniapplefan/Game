@@ -22,32 +22,50 @@ public class HostileLineOfSightSensor : LocalWorldSensorBase, IInjectable
 
 	public override SenseValue Sense(IMonoAgent agent, IComponentReference references)
 	{
-		bool enemyHasLOS = false;
+		agent.GetComponentInChildren<BodyState>().positionTracker.transform.position = agent.GetComponentInChildren<BodyState>().rightArm.transform.position;
+		//agent.GetComponentInChildren<BodyState>().positionTracker.gameObject.GetComponent<MeshRenderer>().material.color = Color.white;
+		bool enemyHasLOS = true;
 		//		Debug.Log(AttackConfig == null ? "AttackConfig Is null" : "AttackConfig Is OK");
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
 			//Player is in range, check if we can see them
 			RaycastHit hit1;
-			Vector3 direction1 = (Colliders[0].transform.position - agent.transform.position).normalized;
-			if (Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+			Vector3 direction1 = (Colliders[0].transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
+			if (Physics.SphereCast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, AttackConfig.LineOfSightSphereCastRadius, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
-				if (hit1.transform.GetComponent<PlayerController>() != null)
+				//Debug.Log(hit1.collider.gameObject.name);
+				if (hit1.transform.GetComponent<PlayerController>() == null)
 				{
-					enemyHasLOS = true;
+					enemyHasLOS = false;
+					//agent.GetComponentInChildren<BodyState>().positionTracker.gameObject.GetComponent<MeshRenderer>().material.color = Color.red;
 				}
 				else
 				{
-					enemyHasLOS = false;
+					//Debug.Log("No LOS");
+					enemyHasLOS = true;
 				}
 			}
 			else
 			{
-				enemyHasLOS = false;
+				//Debug.Log("No LOS");
+				enemyHasLOS = true;
 			}
 		}
 		else
 		{
-			enemyHasLOS = false;
+			//Debug.Log("No LOS");
+			enemyHasLOS = true;
+		}
+		if (enemyHasLOS)
+		{
+			// Debug.Log("LOS");
+			agent.GetComponentInChildren<BodyState>().positionTracker.gameObject.GetComponent<MeshRenderer>().material.color = Color.red;
+
+		}
+		else
+		{
+			//			Debug.Log("No LOS");
+			agent.GetComponentInChildren<BodyState>().positionTracker.gameObject.GetComponent<MeshRenderer>().material.color = Color.white;
 		}
 		return new SenseValue(enemyHasLOS == true ? 1 : 0);
 		//return new SenseValue(Mathf.CeilToInt(references.GetCachedComponent<NPCBrain>().bodyState.HeatContainer_getCurrentHeat()));

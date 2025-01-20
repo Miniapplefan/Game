@@ -97,5 +97,20 @@ public class GunSelector : MonoBehaviour
 		gun.SetParent(slot, weapon);
 		return gun;
 	}
+
+	void OnDrawGizmos()
+	{
+		Color color;
+		color = Color.green;
+		DrawHelperAtCenter((weapon.transform.up + -(weapon.transform.right * 0.5f)), color, 2f);
+
+	}
+	private void DrawHelperAtCenter(
+								 Vector3 direction, Color color, float scale)
+	{
+		Gizmos.color = color;
+		Vector3 destination = transform.position + direction * scale;
+		Gizmos.DrawLine(transform.position, destination);
+	}
 }
 

@@ -8,18 +8,21 @@ public class SiphonModel : SystemModel
 	public bool extended = false;
 	public Transform head;
 
+	public Transform arm;
+
 	float extendedTime = 5;
 	float retractTime = 3;
 	float currentTimer = 0;
 
 	float maxSiphonDistance = 2;
-	int siphonLayerMask = ~((1 << 6) | (1 << 7));
+	public int siphonLayerMask = ~((1 << 6) | (1 << 7));
 
 	public float dollars = 0;
 
-	public SiphonModel(int currentLvl, Transform h) : base(currentLvl)
+	public SiphonModel(int currentLvl, Transform h, Transform a) : base(currentLvl)
 	{
 		head = h;
+		arm = a;
 	}
 
 	public override void SetNameAndMaxLevel()
@@ -94,9 +97,7 @@ public class SiphonModel : SystemModel
 				//Debug.Log("looking at valid target");
 				if (currentTimer >= retractTime)
 				{
-					currentlyLookedAtSiphonTarget().notBeingSiphoned();
-					currentlyLookedAtSiphonTarget().siphoner.extended = false;
-					currentlyLookedAtSiphonTarget().siphoner = null;
+					currentlyLookedAtSiphonTarget().notBeingSiphoned(this);
 					currentTimer = 0;
 					//Debug.Log("other Siphon Retracted");
 				}
@@ -117,10 +118,7 @@ public class SiphonModel : SystemModel
 			//Debug.Log("extended");
 			if (currentTimer >= retractTime)
 			{
-				extended = false;
-				siphonTarget.notBeingSiphoned();
-				siphonTarget.siphoner = null;
-				siphonTarget = null;
+				siphonTarget.notBeingSiphoned(this);
 				currentTimer = 0;
 				//Debug.Log("Siphon Retracted");
 			}
@@ -138,10 +136,7 @@ public class SiphonModel : SystemModel
 				//Debug.Log("looking at valid target");
 				if (currentTimer >= extendedTime)
 				{
-					extended = true;
-					siphonTarget = currentlyLookedAtSiphonTarget();
-					siphonTarget.siphoner = this;
-					siphonTarget.beingSiphoned();
+					currentlyLookedAtSiphonTarget().beingSiphoned(this);
 					currentTimer = 0;
 					//Debug.Log("Siphon Extended");
 				}

@@ -25,49 +25,97 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 
 	public override ITarget Sense(IMonoAgent agent, IComponentReference references)
 	{
+		//string s = "";
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
+			bool seeTarget = false;
+			float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
+			float inRangeDistance = agent.GetComponentInChildren<BodyState>().desiredGunToUse == null ? 10 : agent.GetComponentInChildren<BodyState>().desiredGunToUse.gunData.shootConfig.maxRange;
 
 			//Player is in range, check if we can see them
 			RaycastHit hit1;
-			Vector3 direction1 = (Colliders[0].transform.position - agent.transform.position).normalized;
+			Vector3 direction1 = (Colliders[0].transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
 			//Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask)
 			//Physics.SphereCast(agent.transform.position, 0.2f, direction1, out hit1, Mathf.Infinity,AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask)
-			if (Physics.SphereCast(agent.transform.position, AttackConfig.LineOfSightSphereCastRadius, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+			if (Physics.SphereCast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, AttackConfig.LineOfSightSphereCastRadius, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
 				if (hit1.transform.GetComponent<PlayerController>() != null)
 				{
-					//Debug.Log("Can already see player, staying put");
-					return new PositionTarget(agent.transform.position);
+					seeTarget = true;
 				}
 			}
 
-			//float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
+			if (seeTarget && distanceToPlayer <= inRangeDistance / 2)
+			{
+				Debug.Log("Can already see player and in range, staying put " + inRangeDistance);
+				return new PositionTarget(agent.transform.position);
+			}
+			else if (seeTarget && !(distanceToPlayer <= inRangeDistance / 2))
+			{
+				Debug.Log("Can already see player and NOT in range " + inRangeDistance);
+				int count = 0;
 
-			//int count = 0;
+				//We do not see the player from our position
+				while (count < 5)
+				{
+					Vector3 randomPointOnCircle = GetRandomPointOnCircle(Colliders[0].transform.position, inRangeDistance / 2);
+					float distance = Vector3.Distance(agent.transform.position, randomPointOnCircle);
 
-			//We do not see the player from our position
-			// while (count < 5)
-			// {
-			// 	Vector3 randomPointOnCircle = GetRandomPointOnCircle(Colliders[0].transform.position, distanceToPlayer);
-			// 	float distance = Vector3.Distance(agent.transform.position, randomPointOnCircle);
+					//&& HasLineOfSight(point, Colliders[0].transform.position
 
-			// 	if (distance > distanceToPlayer)
-			// 	{
-			// 		continue;
-			// 	}
-			// 	Vector3 direction2 = (Colliders[0].transform.position - randomPointOnCircle).normalized;
-			// 	RaycastHit hit2;
-			// 	if (Physics.Raycast(randomPointOnCircle, direction2, out hit2, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
-			// 	{
-			// 		if (hit2.transform.GetComponent<PlayerController>() != null)
-			// 		{
-			// 			//Debug.Log("Do not see player, moving");
-			// 			return new PositionTarget(randomPointOnCircle);
-			// 		}
-			// 	}
-			// 	count++;
-			// }
+					if (distance < distanceToPlayer && HasLineOfSight(randomPointOnCircle, Colliders[0].transform.position))
+					{
+						return new PositionTarget(randomPointOnCircle);
+					}
+					else
+					{
+						count++;
+					}
+				}
+			}
+			else if (!seeTarget && distanceToPlayer <= inRangeDistance / 2)
+			{
+				Debug.Log("Do not see player and in range " + inRangeDistance);
+
+				List<Vector3> points = new List<Vector3>();
+				float lineLength = 20f; // Length of the strafing line
+				int numberOfPoints = 30; // Number of points to evaluate
+				Vector3 direction = Vector3.Cross(Vector3.up, (Colliders[0].transform.position - agent.transform.position).normalized); // Perpendicular to the player direction
+
+				for (int i = numberOfPoints - 1; i >= 0; i--) // Reverse the order
+				{
+					float t = (float)i / (numberOfPoints - 1); // Normalize to range [0, 1]
+					Vector3 point = agent.transform.position + direction * (t * lineLength - lineLength / 2);
+					points.Add(point);
+				}
+
+				Vector3 closestPoint = Vector3.zero;
+				float closestDistance = float.MaxValue;
+
+				foreach (Vector3 point in points)
+				{
+					//Debug.Log("checking points");
+					float distanceToAI = Vector3.Distance(point, agent.transform.position);
+
+					if (distanceToAI < distanceToPlayer && HasLineOfSight(point, Colliders[0].transform.position))
+					{
+						//Debug.Log("point within range and has los");
+						if (distanceToAI < closestDistance)
+						{
+							//Debug.Log("closer point found");
+							closestDistance = distanceToAI;
+							closestPoint = point;
+						}
+					}
+				}
+
+				if (closestPoint != Vector3.zero)
+				{
+					return new PositionTarget(closestPoint);
+				}
+				Debug.Log("no point found");
+				return new PositionTarget(Colliders[0].transform.position);
+			}
 
 			// List<Vector3> points = new List<Vector3>();
 			// float angleStep = 360f / numberOfPoints;
@@ -79,46 +127,47 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 			// 	points.Add(point);
 			// }
 
-			List<Vector3> points = new List<Vector3>();
-			float lineLength = 20f; // Length of the strafing line
-			int numberOfPoints = 30; // Number of points to evaluate
-			Vector3 direction = Vector3.Cross(Vector3.up, (Colliders[0].transform.position - agent.transform.position).normalized); // Perpendicular to the player direction
+			// ---------------------------
+			// List<Vector3> points = new List<Vector3>();
+			// float lineLength = 20f; // Length of the strafing line
+			// int numberOfPoints = 30; // Number of points to evaluate
+			// Vector3 direction = Vector3.Cross(Vector3.up, (Colliders[0].transform.position - agent.transform.position).normalized); // Perpendicular to the player direction
 
-			for (int i = numberOfPoints - 1; i >= 0; i--) // Reverse the order
-			{
-				float t = (float)i / (numberOfPoints - 1); // Normalize to range [0, 1]
-				Vector3 point = agent.transform.position + direction * (t * lineLength - lineLength / 2);
-				points.Add(point);
-			}
+			// for (int i = numberOfPoints - 1; i >= 0; i--) // Reverse the order
+			// {
+			// 	float t = (float)i / (numberOfPoints - 1); // Normalize to range [0, 1]
+			// 	Vector3 point = agent.transform.position + direction * (t * lineLength - lineLength / 2);
+			// 	points.Add(point);
+			// }
 
-			Vector3 closestPoint = Vector3.zero;
-			float closestDistance = float.MaxValue;
+			// Vector3 closestPoint = Vector3.zero;
+			// float closestDistance = float.MaxValue;
 
-			foreach (Vector3 point in points)
-			{
-				//Debug.Log("checking points");
-				float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
-				float distanceToAI = Vector3.Distance(point, agent.transform.position);
+			// foreach (Vector3 point in points)
+			// {
+			// 	//Debug.Log("checking points");
+			// 	float distanceToAI = Vector3.Distance(point, agent.transform.position);
 
-				if (distanceToAI < distanceToPlayer && HasLineOfSight(point, Colliders[0].transform.position))
-				{
-					//Debug.Log("point within range and has los");
-					if (distanceToAI < closestDistance)
-					{
-						//Debug.Log("closer point found");
-						closestDistance = distanceToAI;
-						closestPoint = point;
-					}
-				}
-			}
+			// 	if (distanceToAI < distanceToPlayer && HasLineOfSight(point, Colliders[0].transform.position))
+			// 	{
+			// 		//Debug.Log("point within range and has los");
+			// 		if (distanceToAI < closestDistance)
+			// 		{
+			// 			//Debug.Log("closer point found");
+			// 			closestDistance = distanceToAI;
+			// 			closestPoint = point;
+			// 		}
+			// 	}
+			// }
 
-			if (closestPoint != Vector3.zero)
-			{
-				return new PositionTarget(closestPoint);
-			}
-			Debug.Log("no point found");
-			//return new PositionTarget(Colliders[0].transform.position);
-
+			// if (closestPoint != Vector3.zero)
+			// {
+			// 	return new PositionTarget(closestPoint);
+			// }
+			// Debug.Log("no point found");
+			// return new PositionTarget(Colliders[0].transform.position);
+			//------------------
+			//s = "all ifs cleared";
 		}
 
 		// if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
@@ -144,7 +193,8 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 		//     return null;
 		//   }
 		// }
-		return new PositionTarget(agent.transform.position);
+		Debug.Log("Advancing ");
+		return new PositionTarget(Colliders[0].transform.position);
 	}
 
 	private Vector3 GetRandomPointOnCircle(Vector3 center, float radius)

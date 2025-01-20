@@ -10,23 +10,26 @@ public class Gun : MonoBehaviour
 
 	private Rigidbody weapon;
 	private ParticleSystem shootSystem;
+	private LineRenderer laser;
+	private float lastRaycastTime;
+	private float raycastInterval = 0.5f;
+	private GameObject weaponHitPoint;
 	private float lastShootTime;
 	private GameObject weaponSlotLocation;
 	private ObjectPool<TrailRenderer> TrailPool;
+	private ObjectPool<ParticleSystem> HitParticlePool;
 	public bool isPowered;
 	private float chargeTimeLeftCache;
+	private float prepTimeLeftCache;
+	private Transform prepInd;
+	private Vector3 prepIndicatorSizeCache;
 	public bool isFiringBurst = false;
+	public bool isFiring = false;
 
 
 	public void SetParent(GameObject parent, Rigidbody weap)
 	{
 		weaponSlotLocation = parent;
-		GameObject model = Instantiate(gunData.ModelPrefab);
-		model.transform.SetParent(weaponSlotLocation.transform, false);
-		model.transform.localPosition = gunData.SpawnPoint;
-		model.transform.localRotation = Quaternion.Euler(gunData.SpawnRotation);
-
-		shootSystem = model.GetComponentInChildren<ParticleSystem>();
 		weapon = weap;
 	}
 
@@ -35,6 +38,7 @@ public class Gun : MonoBehaviour
 	{
 		lastShootTime = 0;
 		TrailPool = new ObjectPool<TrailRenderer>(CreateTrail);
+		HitParticlePool = new ObjectPool<ParticleSystem>(CreateHitParticles);
 
 		GameObject model = Instantiate(gunData.ModelPrefab);
 		model.transform.SetParent(weaponSlotLocation.transform, false);
@@ -42,6 +46,15 @@ public class Gun : MonoBehaviour
 		model.transform.localRotation = Quaternion.Euler(gunData.SpawnRotation);
 
 		shootSystem = model.GetComponentInChildren<ParticleSystem>();
+		laser = model.GetComponentInChildren<LineRenderer>();
+
+
+		prepTimeLeftCache = gunData.shootConfig.prepTime;
+		prepInd = model.transform.Find("prep");
+		prepIndicatorSizeCache = prepInd.transform.localScale;
+		prepInd.gameObject.SetActive(false);
+
+		raycastInterval += Random.Range(0.01f, 0.02f);
 	}
 
 	public bool isCharged()
@@ -53,17 +66,30 @@ public class Gun : MonoBehaviour
 	{
 		if (chargeTimeLeftCache <= 0)
 		{
-			// Debug.Log("Done charging");
-			if (gunData.shootConfig.isBurst)
+			isFiring = true;
+			if (prepTimeLeftCache <= 0)
 			{
-				StartCoroutine(ShootBurst());
+				// Debug.Log("Done charging");
+				if (gunData.shootConfig.isBurst)
+				{
+					StartCoroutine(ShootBurst());
+				}
+				else
+				{
+					SingleShot();
+				}
+				chargeTimeLeftCache = gunData.shootConfig.fireRate;
+				prepTimeLeftCache = gunData.shootConfig.prepTime;
+				prepInd.gameObject.SetActive(false);
+				prepInd.localScale = prepIndicatorSizeCache;
+
+				isFiring = false;
+				return true;
 			}
 			else
 			{
-				SingleShot();
+				return true;
 			}
-			chargeTimeLeftCache = gunData.shootConfig.fireRate;
-			return true;
 		}
 		else
 		{
@@ -90,53 +116,56 @@ public class Gun : MonoBehaviour
 
 	public bool SingleShot()
 	{
-		//lastShootTime = Time.time;
-		chargeTimeLeftCache = gunData.shootConfig.fireRate;
-		shootSystem.Play();
-		Vector3 shootDirection = shootSystem.transform.forward
-			+ new Vector3(
-				Random.Range(
-					-gunData.shootConfig.Spread.x,
-					gunData.shootConfig.Spread.x
-				),
-				Random.Range(
-					-gunData.shootConfig.Spread.y,
-					gunData.shootConfig.Spread.y
-				),
-				Random.Range(
-					-gunData.shootConfig.Spread.z,
-					gunData.shootConfig.Spread.z
-				)
-			);
-		shootDirection.Normalize();
-		weapon.AddRelativeForce(weapon.transform.up * gunData.shootConfig.recoil, ForceMode.Impulse);
+		for (int i = 0; i < gunData.shootConfig.bulletsPerShot; i++)
+		{
+			//lastShootTime = Time.time;
+			chargeTimeLeftCache = gunData.shootConfig.fireRate;
+			shootSystem.Play();
+			Vector3 shootDirection = shootSystem.transform.forward
+				+ new Vector3(
+					Random.Range(
+						-gunData.shootConfig.Spread.x,
+						gunData.shootConfig.Spread.x
+					),
+					Random.Range(
+						-gunData.shootConfig.Spread.y,
+						gunData.shootConfig.Spread.y
+					),
+					Random.Range(
+						-gunData.shootConfig.Spread.z,
+						gunData.shootConfig.Spread.z
+					)
+				);
+			shootDirection.Normalize();
+			weapon.AddForce((-weaponSlotLocation.GetComponentInParent<GunSelector>().gameObject.transform.right).normalized * gunData.shootConfig.recoil, ForceMode.Impulse);
 
-		if (Physics.Raycast(
-				shootSystem.transform.position,
-				shootDirection,
-				out RaycastHit hit,
-				float.MaxValue,
-				gunData.shootConfig.HitMask
-			))
-		{
-			StartCoroutine(
-				PlayTrail(
+			if (Physics.Raycast(
 					shootSystem.transform.position,
-					hit.point,
-					hit
-				)
-			);
-			ManageHit(hit);
-		}
-		else
-		{
-			StartCoroutine(
-				PlayTrail(
-					shootSystem.transform.position,
-					shootSystem.transform.position + (shootDirection * gunData.trailConfig.MissDistance),
-					new RaycastHit()
-				)
-			);
+					shootDirection,
+					out RaycastHit hit,
+					gunData.shootConfig.maxRange,
+					gunData.shootConfig.HitMask
+				))
+			{
+				StartCoroutine(
+					PlayTrail(
+						shootSystem.transform.position,
+						hit.point,
+						hit
+					)
+				);
+				ManageHit(hit);
+			}
+			else
+			{
+				StartCoroutine(
+					PlayTrail(
+						shootSystem.transform.position,
+						shootSystem.transform.position + (shootDirection * gunData.shootConfig.maxRange),
+						new RaycastHit()
+					)
+				);
+			}
 		}
 		return true;
 	}
@@ -162,6 +191,11 @@ public class Gun : MonoBehaviour
 			{
 				hitRb.AddForce(impulse * 2.5f, ForceMode.Impulse);
 			}
+			// StartCoroutine(
+			// 		PlayHitParticles(hit));
+
+			// TODO make these hit particles object pooled
+			Destroy(Instantiate(gunData.shootConfig.hitParticles, hit.point, Quaternion.Euler(hit.normal)).gameObject, 1f);
 		}
 		else if (hitRb != null)
 		{
@@ -171,7 +205,7 @@ public class Gun : MonoBehaviour
 		}
 		if (marchingCubes != null)
 		{
-			marchingCubes.TakeDamage(hit.point, 1);
+			marchingCubes.TakeDamage(hit.point, gunData.shootConfig.marchingCubesDamage);
 		}
 	}
 
@@ -221,6 +255,22 @@ public class Gun : MonoBehaviour
 		//LeanPool.Despawn(instance);
 	}
 
+	private IEnumerator PlayHitParticles(RaycastHit hit)
+	{
+		ParticleSystem instance = HitParticlePool.Get();
+		instance.gameObject.SetActive(true);
+		instance.transform.position = hit.point;
+		instance.transform.rotation = Quaternion.Euler(hit.normal);
+
+		yield return null;
+		instance.Play();
+
+		yield return new WaitForSeconds(gunData.trailConfig.Duration);
+		yield return null;
+		instance.gameObject.SetActive(false);
+		HitParticlePool.Release(instance);
+	}
+
 	private TrailRenderer CreateTrail()
 	{
 		GameObject instance = new GameObject("Bullet Trail");
@@ -237,6 +287,21 @@ public class Gun : MonoBehaviour
 		return trail;
 	}
 
+	private ParticleSystem CreateHitParticles()
+	{
+		GameObject instance = new GameObject("Hit Particles");
+		ParticleSystem hitParticles = instance.AddComponent<ParticleSystem>();
+		hitParticles = gunData.shootConfig.hitParticles;
+
+		return hitParticles;
+	}
+
+	private void DrawLaser(Vector3 startPosition, Vector3 endPosition)
+	{
+		laser.SetPosition(0, startPosition);
+		laser.SetPosition(1, endPosition);
+	}
+
 	private void Update()
 	{
 		//Debug.Log(chargeTimeLeftCache);
@@ -244,5 +309,34 @@ public class Gun : MonoBehaviour
 		{
 			chargeTimeLeftCache -= Time.deltaTime;
 		}
+
+		if (isPowered && prepTimeLeftCache > 0 && isFiring)
+		{
+			prepInd.gameObject.SetActive(true);
+			prepInd.localScale *= 1.05f;
+
+			prepTimeLeftCache -= Time.deltaTime;
+			Shoot();
+		}
+
+		if (isCharged() && Time.time - lastRaycastTime >= raycastInterval)
+		{
+			// if (Physics.Raycast(
+			// 		shootSystem.transform.position,
+			// 		shootSystem.transform.forward,
+			// 		out RaycastHit hit,
+			// 		gunData.shootConfig.maxRange,
+			// 		gunData.shootConfig.HitMask
+			// 	))
+			// {
+			// 	DrawLaser(shootSystem.transform.position, shootSystem.transform.position + shootSystem.transform.forward * Vector3.Distance(shootSystem.transform.position, hit.point));
+			// }
+
+		}
+		else
+		{
+			DrawLaser(shootSystem.transform.position, shootSystem.transform.position);
+		}
 	}
+
 }

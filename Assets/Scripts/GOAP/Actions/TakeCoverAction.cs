@@ -14,7 +14,7 @@ public class TakeCoverAction : ActionBase<CommonData>, IInjectable
 
 	public override void Start(IMonoAgent agent, CommonData data)
 	{
-		data.Timer = Random.Range(1, 2);
+		data.Timer = Random.Range(2, 3);
 	}
 
 	public override ActionRunState Perform(IMonoAgent agent, CommonData data, ActionContext context)
@@ -34,25 +34,31 @@ public class TakeCoverAction : ActionBase<CommonData>, IInjectable
 		bool seePlayer = false;
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
-			Vector3 direction1 = (Colliders[0].transform.position - agent.transform.position).normalized;
+			Vector3 direction1 = (Colliders[0].transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
 			RaycastHit hit1;
-			if (Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+			if (Physics.SphereCast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, AttackConfig.LineOfSightSphereCastRadius, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
+				//Debug.Log(agent.transform.position);
 				seePlayer = hit1.transform.GetComponent<PlayerController>() != null;
 			}
 		}
 
-		if (seePlayer)
+		if (!seePlayer)
 		{
+			// Debug.Log("See player");
 			return ActionRunState.Stop;
 		}
+		// else
+		// {
+		// 	Debug.Log("Do not see player");
+		// }
 
-		if (data.bodyState.heatContainer.GetTemperatureRelativeToAir() < 1)
-		{
-			return ActionRunState.Stop;
-		}
+		// if (data.bodyState.heatContainer.GetTemperatureRelativeToAir() < 1)
+		// {
+		// 	return ActionRunState.Stop;
+		// }
 
-		return ActionRunState.Continue;
+		return ActionRunState.Stop;
 	}
 
 	public override void End(IMonoAgent agent, CommonData data) { }

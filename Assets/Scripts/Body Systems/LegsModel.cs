@@ -14,11 +14,11 @@ public class LegsModel : SystemModel
 
 	public float taggingModifier = 100f;
 
-	public float taggingRecoveryRate = 0.2f;
+	public float taggingRecoveryRate = 0.6f;
 
-	public float taggingRecoveryRateCache = 0.4f;
+	public float taggingRecoveryRateCache = 0.6f;
 
-	public float taggingRecoveryRateRecoveryRate = 0.0001f;
+	public float taggingRecoveryRateRecoveryRate = 0.0002f;
 
 	public bool canMove = true;
 
@@ -66,8 +66,8 @@ public class LegsModel : SystemModel
 
 	float moveSpeed;
 
-	int rightLegHealth;
-	int leftLegHealth;
+	public int rightLegHealth;
+	public int leftLegHealth;
 
 	float getSpeedFromLeg(int legHealth)
 	{

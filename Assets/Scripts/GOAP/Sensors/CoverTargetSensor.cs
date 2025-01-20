@@ -107,8 +107,9 @@ public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
 			RaycastHit hit1;
-			Vector3 direction1 = (Colliders[0].transform.position - agent.transform.position).normalized;
-			if (Physics.Raycast(agent.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+			Vector3 direction1 = (Colliders[0].gameObject.GetComponentInParent<BodyState>().headCollider.transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
+			//+ AttackConfig.EyeLevel
+			if (Physics.SphereCast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, AttackConfig.LineOfSightSphereCastRadius, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
 				if (hit1.transform.GetComponent<PlayerController>() != null)
 				{
@@ -139,7 +140,7 @@ public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 					//********
 					List<Vector3> points = new List<Vector3>();
 					float lineLength = 20f; // Length of the strafing line
-					int numberOfPoints = 30; // Number of points to evaluate
+					int numberOfPoints = 20; // Number of points to evaluate
 					Vector3 direction = Vector3.Cross(Vector3.up, (Colliders[0].transform.position - agent.transform.position).normalized); // Perpendicular to the player direction
 
 					for (int i = numberOfPoints - 1; i >= 0; i--) // Reverse the order
@@ -172,74 +173,86 @@ public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 
 					if (closestPoint != Vector3.zero)
 					{
+						//						Debug.Log("Strafe");
 						return closestPoint;
 					}
-				}
-			}
-		}
 
-		while (count < 50)
-		{
-			for (int i = 0; i < Colliders.Length; i++)
-			{
-				Colliders[i] = null;
-			}
 
-			int target = Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, TargetCollider, AttackConfig.AttackableLayerMask);
-
-			int hits = Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.ObstructionLayerMask);
-
-			int hitReduction = 0;
-			for (int i = 0; i < hits; i++)
-			{
-				if (Vector3.Distance(Colliders[i].transform.position, TargetCollider[0].transform.position) < AttackConfig.MinPlayerDistance || Colliders[i].bounds.size.y < AttackConfig.MinObstacleHeight)
-				{
-					Colliders[i] = null;
-					hitReduction++;
-				}
-			}
-			hits -= hitReduction;
-
-			System.Array.Sort(Colliders, ColliderArraySortComparer);
-
-			for (int i = 0; i < hits; i++)
-			{
-				if (NavMesh.SamplePosition(Colliders[i].transform.position, out NavMeshHit hit, 4f, navMeshAgent.areaMask))
-				{
-					if (!NavMesh.FindClosestEdge(hit.position, out hit, navMeshAgent.areaMask))
+					while (count < 10)
 					{
-						Debug.LogError($"Unable to find edge close to {hit.position}");
-					}
-
-					if (Vector3.Dot(hit.normal, (TargetCollider[0].transform.position - hit.position).normalized) < AttackConfig.HideSensitivity)
-					{
-						return hit.position;
-					}
-					else
-					{
-						// Since the previous spot wasn't facing "away" enough from the target, we'll try on the other side of the object
-						if (NavMesh.SamplePosition(Colliders[i].transform.position - (TargetCollider[0].transform.position - hit.position).normalized * 2, out NavMeshHit hit2, 2f, navMeshAgent.areaMask))
+						for (int i = 0; i < Colliders.Length; i++)
 						{
-							if (!NavMesh.FindClosestEdge(hit2.position, out hit2, navMeshAgent.areaMask))
-							{
-								Debug.LogError($"Unable to find edge close to {hit2.position} (second attempt)");
-							}
+							Colliders[i] = null;
+						}
 
-							if (Vector3.Dot(hit2.normal, (TargetCollider[0].transform.position - hit2.position).normalized) < AttackConfig.HideSensitivity)
+						int target = Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, TargetCollider, AttackConfig.AttackableLayerMask);
+
+						int hits = Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.ObstructionLayerMask);
+
+						int hitReduction = 0;
+						for (int i = 0; i < hits; i++)
+						{
+							if (Vector3.Distance(Colliders[i].transform.position, TargetCollider[0].transform.position) < AttackConfig.MinPlayerDistance || Colliders[i].bounds.size.y < AttackConfig.MinObstacleHeight)
 							{
-								return hit2.position;
+								Colliders[i] = null;
+								hitReduction++;
 							}
 						}
+						hits -= hitReduction;
+
+						System.Array.Sort(Colliders, ColliderArraySortComparer);
+
+						for (int i = 0; i < hits; i++)
+						{
+							if (NavMesh.SamplePosition(Colliders[i].transform.position, out NavMeshHit hit, 4f, navMeshAgent.areaMask))
+							{
+								if (!NavMesh.FindClosestEdge(hit.position, out hit, navMeshAgent.areaMask))
+								{
+									Debug.LogError($"Unable to find edge close to {hit.position}");
+								}
+
+								if (Vector3.Dot(hit.normal, (TargetCollider[0].transform.position - hit.position).normalized) < AttackConfig.HideSensitivity)
+								{
+									//Debug.Log("Llama");
+									return hit.position;
+								}
+								else
+								{
+									// Since the previous spot wasn't facing "away" enough from the target, we'll try on the other side of the object
+									if (NavMesh.SamplePosition(Colliders[i].transform.position - (TargetCollider[0].transform.position - hit.position).normalized * 2, out NavMeshHit hit2, 2f, navMeshAgent.areaMask))
+									{
+										if (!NavMesh.FindClosestEdge(hit2.position, out hit2, navMeshAgent.areaMask))
+										{
+											Debug.LogError($"Unable to find edge close to {hit2.position} (second attempt)");
+										}
+
+										if (Vector3.Dot(hit2.normal, (TargetCollider[0].transform.position - hit2.position).normalized) < AttackConfig.HideSensitivity)
+										{
+											//Debug.Log("Llama");
+											return hit2.position;
+										}
+									}
+								}
+							}
+							else
+							{
+								Debug.LogError($"Unable to find NavMesh near object {Colliders[i].name} at {Colliders[i].transform.position}");
+							}
+						}
+						count++;
+
 					}
 				}
-				else
-				{
-					Debug.LogError($"Unable to find NavMesh near object {Colliders[i].name} at {Colliders[i].transform.position}");
-				}
 			}
-			count++;
-
+			Vector3 randPos = GetRandomPosition(agent);
+			while (Vector3.Distance(randPos, agent.transform.position) > Vector3.Distance(Colliders[0].transform.position, agent.transform.position))
+			{
+				randPos = GetRandomPosition(agent);
+			}
+			//Debug.Log("Random");
+			return randPos;
 		}
+		//Debug.Log("Random");
 		return GetRandomPosition(agent);
 	}
 
