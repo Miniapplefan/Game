@@ -39,6 +39,10 @@ public class SiphonTarget : MonoBehaviour
 				//Debug.Log(siphoner.dollars);
 				DrawLine(dollarsLeftIndicator.transform.position, siphoner.head.gameObject.transform.position);
 			}
+			if (Vector3.Distance(transform.position, siphoner.head.transform.position) > siphoner.getMaxSiphonDistance() || dollarsLeft <= 0)
+			{
+				notBeingSiphoned(siphoner);
+			}
 		}
 	}
 

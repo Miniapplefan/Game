@@ -7,6 +7,7 @@ using UnityEngine.AI;
 public class AgentMoveBehavior : MonoBehaviour
 {
 	private BodyController bodyController;
+	private BodyState bodyState;
 	private AIController AIController;
 	private NavMeshAgent NavMeshAgent;
 	private AgentBehaviour AgentBehaviour;
@@ -21,6 +22,8 @@ public class AgentMoveBehavior : MonoBehaviour
 		AgentBehaviour = GetComponent<AgentBehaviour>();
 		AIController = GetComponentInChildren<AIController>();
 		bodyController = GetComponentInChildren<BodyController>();
+		bodyState = GetComponentInChildren<BodyState>();
+		// NavMeshAgent.autoRepath = true;
 	}
 
 	private void OnEnable()
@@ -43,7 +46,11 @@ public class AgentMoveBehavior : MonoBehaviour
 	{
 		CurrentTarget = target;
 		LastPosition = CurrentTarget.Position;
-		NavMeshAgent.SetDestination(target.Position);
+		if (NavMeshAgent.enabled)
+		{
+			NavMeshAgent.ResetPath();
+			NavMeshAgent.SetDestination(target.Position);
+		}
 		NavMeshAgent.updatePosition = true;
 		//AIController.SetAimTarget(target.Position + EyeLevel);
 	}
@@ -69,9 +76,12 @@ public class AgentMoveBehavior : MonoBehaviour
 		{
 			return;
 		}
+		bodyState.positionTracker.transform.position = NavMeshAgent.destination;
+		bodyState.positionTracker2.transform.position = CurrentTarget.Position;
 
-		if (MinMoveDistance <= Vector3.Distance(CurrentTarget.Position, LastPosition))
+		if (MinMoveDistance <= Vector3.Distance(CurrentTarget.Position, LastPosition) && NavMeshAgent.enabled)
 		{
+			NavMeshAgent.ResetPath();
 			LastPosition = CurrentTarget.Position;
 			NavMeshAgent.SetDestination(CurrentTarget.Position);
 			//AIController.SetAimTarget(CurrentTarget.Position + EyeLevel);

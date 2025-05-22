@@ -14,9 +14,9 @@ public class LegsModel : SystemModel
 
 	public float taggingModifier = 100f;
 
-	public float taggingRecoveryRate = 0.6f;
+	public float taggingRecoveryRate = 0.8f;
 
-	public float taggingRecoveryRateCache = 0.6f;
+	public float taggingRecoveryRateCache = 0.8f;
 
 	public float taggingRecoveryRateRecoveryRate = 0.0002f;
 
@@ -107,7 +107,7 @@ public class LegsModel : SystemModel
 	{
 		// Calculate tick duration based on leg health and tagging.
 		float legHealthFactor = (getSpeedFromLeg(leftLegHealth) + getSpeedFromLeg(rightLegHealth)) / 2f;
-		currentTickDuration = legHealthFactor >= 1 && taggingModifier >= 100 ? 0 : Mathf.Lerp(0f, maxTickDuration, 1f - legHealthFactor + ((taggingModifier / 100f))); //* (100f / taggingModifier)
+		currentTickDuration = legHealthFactor >= 1 && taggingModifier >= 100 ? 0 : Mathf.Lerp(0f, maxTickDuration, 1f - legHealthFactor + getTagging()); //* (100f / taggingModifier)
 	}
 
 	public float getMoveSpeed()
@@ -117,10 +117,17 @@ public class LegsModel : SystemModel
 			return 0f;
 
 		float baseSpeed = (getSpeedFromLeg(rightLegHealth) + getSpeedFromLeg(leftLegHealth));
-		float limpModifier = (taggingModifier / 100f);
+		float limpModifier = getTagging();
 
 		return isBurstSpeed ? baseSpeed : baseSpeed * limpModifier;
 	}
+
+	public float getBaseSpeed()
+	{
+		return getSpeedFromLeg(rightLegHealth) + getSpeedFromLeg(leftLegHealth);
+	}
+
+
 
 	// public float getMoveSpeed()
 	// {
@@ -134,16 +141,21 @@ public class LegsModel : SystemModel
 	// 	}
 	// }
 
-	public void RecoverFromTagging()
+	public void RecoverFromTagging(float heatLevel)
 	{
 		if (taggingModifier < 100f)
 		{
-			taggingModifier += taggingRecoveryRateCache;
+			taggingModifier += taggingRecoveryRateCache * heatLevel;
 		}
 		if (taggingRecoveryRateCache < taggingRecoveryRate)
 		{
 			taggingRecoveryRateCache += taggingRecoveryRateRecoveryRate;
 		}
+	}
+
+	public float getTagging()
+	{
+		return taggingModifier / 100f;
 	}
 
 	public void HandleTagging(Limb l, float impact)

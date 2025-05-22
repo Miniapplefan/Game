@@ -28,5 +28,5 @@ MonoBehaviour:
   recoil: 50
   impactForce: 100
   marchingCubesDamage: 5
-  heatPerShot: 5000000
+  heatPerShot: 150000000
   hitParticles: {fileID: 9056568595549153658, guid: d62a75f2eddd043b4ab15b49376c3560, type: 3}

@@ -8,7 +8,7 @@ public class BodyState : MonoBehaviour
 	public HeatContainer heatContainer;
 	public HeadModel head;
 	public CoolingModel cooling;
-	private LegsModel legs;
+	public LegsModel legs;
 	private SensorsModel sensors;
 	public WeaponsModel weapons;
 	public SiphonModel siphon;
@@ -25,6 +25,8 @@ public class BodyState : MonoBehaviour
 	public Collider leftLeg;
 
 	public GameObject positionTracker;
+	public GameObject positionTracker2;
+
 
 	public BodyState targetBodyState;
 

@@ -6,6 +6,8 @@ using CrashKonijn.Goap.Classes;
 using CrashKonijn.Goap.Enums;
 using CrashKonijn.Goap.Interfaces;
 using UnityEngine;
+using System.Collections;
+using Unity.Mathematics;
 
 public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 {
@@ -13,6 +15,10 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 	private Collider[] Colliders = new Collider[1];
 
 	public enum LimbToTarget { Head, RightArm, RightLeg, LeftLeg };
+
+	bool waitedOutAttackDelay = false;
+
+	List<GunConsideration> shootableGuns;
 
 	public struct LimbConsideration
 	{
@@ -66,6 +72,7 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 		limbConsiderations.Add(new LimbConsideration(LimbToTarget.RightLeg, () => ConsiderLegs(agent, data)));
 		limbConsiderations.Add(new LimbConsideration(LimbToTarget.LeftLeg, () => ConsiderLegs(agent, data)));
 
+
 		gunConsideration = new List<GunConsideration>();
 		gunConsideration.Add(new GunConsideration(0, data.bodyState.weapons.gunSelector.ActiveGun1));
 		gunConsideration.Add(new GunConsideration(1, data.bodyState.weapons.gunSelector.ActiveGun2));
@@ -95,22 +102,30 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 					Vector3 limbPos = LimbToPosition(limbConsideration.limb, data);
 					if (!IsLimbObstructed(limbPos, agent))
 					{
+						if ((limbConsideration.limb == LimbToTarget.LeftLeg && data.targetState.legs.leftLegHealth == 0) || (limbConsideration.limb == LimbToTarget.RightLeg && data.targetState.legs.rightLegHealth == 0))
+						{
+							continue;
+						}
+						//Debug.Log(limbConsideration.limb);
 						data.AIController.SetAimTarget(limbPos);
 						break;
 					}
 				}
 
-				List<GunConsideration> shootableGuns = rankGunToUse(data, agent);
+				shootableGuns = rankGunToUse(data, agent);
+				//Debug.Log("I want to fire " + data.bodyState.weapons.guns[topRankedGun.gunSlot].gunData.GunName);
 				foreach (var gunConsideration in shootableGuns)
 				{
 					if (data.bodyState.weapons.guns[gunConsideration.gunSlot].isCharged() && data.bodyState.weapons.GetCurrentPowerAllocationDictionary()[topRankedGun.gunSlot])
 					{
+						//Debug.Log("Able to fire");
 						data.bodyState.desiredGunToUse = gunConsideration.gun;
 						topRankedGun = gunConsideration;
 						break;
 					}
 					else
 					{
+						//Debug.Log("Stopping Here");
 						return ActionRunState.Stop;
 					}
 				}
@@ -139,7 +154,7 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 		float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
 		Vector3 direction1 = (Colliders[0].transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
 		RaycastHit hit1;
-		bool seePlayer = false;
+		bool seePlayer = data.bodyState.legs.getBaseSpeed() > 0 ? false : true;
 		if (Physics.SphereCast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, AttackConfig.LineOfSightSphereCastRadius, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 		{
 			//data.bodyState.positionTracker.gameObject.GetComponent<MeshRenderer>().material.color = Color.red;
@@ -178,44 +193,49 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 				return ActionRunState.Continue;
 			}
 
-			if (data.bodyState.weapons.guns[topRankedGun.gunSlot].isCharged() && data.bodyState.weapons.GetCurrentPowerAllocationDictionary()[topRankedGun.gunSlot])
+
+
+			foreach (GunConsideration gc in shootableGuns)
 			{
-				//Debug.Log("I want to fire " + data.bodyState.weapons.guns[topRankedGun.gunSlot].gunData.GunName);
-				if (topRankedGun.gunSlot == 0)
+				if (data.bodyState.weapons.guns[gc.gunSlot].isCharged() && data.bodyState.weapons.GetCurrentPowerAllocationDictionary()[gc.gunSlot])
 				{
-					data.AIController.pressingFire1 = true;
-					return ActionRunState.Continue;
+
+					if (gc.gunSlot == 0)
+					{
+						data.AIController.pressingFire1 = true;
+						return ActionRunState.Continue;
+					}
+					else if (gc.gunSlot == 1)
+					{
+						data.AIController.pressingFire2 = true;
+						return ActionRunState.Continue;
+					}
+					else if (gc.gunSlot == 2)
+					{
+						data.AIController.pressingFire3 = true;
+						return ActionRunState.Continue;
+					}
 				}
-				else if (topRankedGun.gunSlot == 1)
+				// if (data.bodyState.Weapons_weapon1Charged() && data.bodyState.Weapons_weapon1Powered())
+				// {
+				// 	data.AIController.pressingFire1 = true;
+				// 	return ActionRunState.Continue;
+				// }
+				// else if (data.bodyState.Weapons_weapon2Charged() && data.bodyState.Weapons_weapon2Powered())
+				// {
+				// 	data.AIController.pressingFire2 = true;
+				// 	return ActionRunState.Continue;
+				// }
+				// else if (data.bodyState.Weapons_weapon3Charged() && data.bodyState.Weapons_weapon3Powered())
+				// {
+				// 	data.AIController.pressingFire3 = true;
+				// 	return ActionRunState.Continue;
+				// }
+				else
 				{
-					data.AIController.pressingFire2 = true;
-					return ActionRunState.Continue;
+					//data.bodyState.weapons.CycleToNextPowerAllocationDictionary();
+					return ActionRunState.Stop;
 				}
-				else if (topRankedGun.gunSlot == 2)
-				{
-					data.AIController.pressingFire3 = true;
-					return ActionRunState.Continue;
-				}
-			}
-			// if (data.bodyState.Weapons_weapon1Charged() && data.bodyState.Weapons_weapon1Powered())
-			// {
-			// 	data.AIController.pressingFire1 = true;
-			// 	return ActionRunState.Continue;
-			// }
-			// else if (data.bodyState.Weapons_weapon2Charged() && data.bodyState.Weapons_weapon2Powered())
-			// {
-			// 	data.AIController.pressingFire2 = true;
-			// 	return ActionRunState.Continue;
-			// }
-			// else if (data.bodyState.Weapons_weapon3Charged() && data.bodyState.Weapons_weapon3Powered())
-			// {
-			// 	data.AIController.pressingFire3 = true;
-			// 	return ActionRunState.Continue;
-			// }
-			else
-			{
-				//data.bodyState.weapons.CycleToNextPowerAllocationDictionary();
-				return ActionRunState.Stop;
 			}
 		}
 		// else
@@ -240,6 +260,13 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 			default:
 				return data.targetState.rightArm.bounds.center;
 		}
+	}
+
+	private IEnumerator AttackDelay()
+	{
+		var rand = UnityEngine.Random.Range(0.0f, 5f);
+		yield return new WaitForSeconds(rand);
+		waitedOutAttackDelay = true;
 	}
 
 	private bool IsLimbObstructed(Vector3 limbPos, IMonoAgent agent)
@@ -267,19 +294,28 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 
 	public float ConsiderHead(IMonoAgent agent, AttackData data)
 	{
-		float hostileOverheated = data.targetState.bodyIsOverheated ? 1 : 0;
+		float hostileOverheated = data.targetState.head.health < 4 ? 0.6f : 0;
 
 		return hostileOverheated;
 	}
 
 	public float ConsiderRightArm(IMonoAgent agent, AttackData data)
 	{
+		// if (data.targetState.bodyIsOverheated && data.targetState.siphon.extended)
+		// {
+		// 	return 1;
+		// }
 
 		return 0.5f;
 	}
 
 	public float ConsiderLegs(IMonoAgent agent, AttackData data)
 	{
+		if (data.targetState.bodyIsOverheated && data.targetState.legs.getBaseSpeed() > 0)
+		{
+			return 1;
+		}
+
 		float hostileTagging = data.targetState.Legs_getTaggingHealth() / 100;
 
 		return hostileTagging;
@@ -290,28 +326,49 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 		if (data.targetState.Legs_getTaggingHealth() / 100 > 0.5 && (!IsLimbObstructed(LimbToPosition(LimbToTarget.RightLeg, data), agent) || (!IsLimbObstructed(LimbToPosition(LimbToTarget.LeftLeg, data), agent))))
 		{
 			List<GunConsideration> sortedGunConsiderations = gunConsideration
-				.OrderByDescending(lc => lc.gun.gunData.shootConfig.impactForce)
+				.OrderByDescending(lc => lc.gun.gunData.shootConfig.impactForce * gunRankRangeConsideration(data, agent, lc.gun))
 				.ToList();
+
+			// foreach (var gc in sortedGunConsiderations)
+			// {
+			// 	Debug.Log(gc.gun.name + " " + gc.gun.gunData.shootConfig.impactForce * gunRankRangeConsideration(data, agent, gc.gun));
+			// }
 
 			return sortedGunConsiderations;
 		}
-		else if (data.targetState.HeatContainer_getCurrentHeat() / data.targetState.cooling.GetMaxHeat() > 0.9f)
+		else if (data.targetState.HeatContainer_getCurrentHeat() / data.targetState.cooling.GetMaxHeat() > 0.7f)
 		{
 			List<GunConsideration> sortedGunConsiderations = gunConsideration
-				.OrderByDescending(lc => lc.gun.gunData.shootConfig.bulletsPerShot * lc.gun.gunData.shootConfig.burst_numShots)
+				.OrderByDescending(lc => lc.gun.gunData.shootConfig.bulletsPerShot * lc.gun.gunData.shootConfig.burst_numShots * gunRankRangeConsideration(data, agent, lc.gun))
 				.ToList();
+
+			// foreach (var gc in sortedGunConsiderations)
+			// {
+			// 	Debug.Log(gc.gun.name + " " + gc.gun.gunData.shootConfig.impactForce * gunRankRangeConsideration(data, agent, gc.gun));
+			// }
 
 			return sortedGunConsiderations;
 		}
 		else
 		{
 			List<GunConsideration> sortedGunConsiderations = gunConsideration
-				.OrderByDescending(lc => lc.gun.gunData.shootConfig.heatPerShot)
+				.OrderByDescending(lc => lc.gun.gunData.shootConfig.heatPerShot * gunRankRangeConsideration(data, agent, lc.gun))
 				.ToList();
+
+			// foreach (var gc in sortedGunConsiderations)
+			// {
+			// 	Debug.Log(gc.gun.name + " " + gc.gun.gunData.shootConfig.impactForce * gunRankRangeConsideration(data, agent, gc.gun));
+			// }
 
 			return sortedGunConsiderations;
 		}
 
+	}
+
+	private float gunRankRangeConsideration(AttackData data, IMonoAgent agent, Gun gun)
+	{
+		//Debug.Log(gun.name + " " + (Mathf.Abs(Vector3.Distance(data.targetState.rb.transform.position, agent.transform.position)) <= gun.gunData.shootConfig.maxRange || agent.GetComponentInChildren<BodyState>().legs.getMoveSpeed() > 0 ? 1 : 0));
+		return Mathf.Abs(Vector3.Distance(data.targetState.rb.transform.position, agent.transform.position)) <= gun.gunData.shootConfig.maxRange || agent.GetComponentInChildren<BodyState>().legs.getMoveSpeed() > 0 ? 1 : 0;
 	}
 
 	public override void End(IMonoAgent agent, AttackData data)

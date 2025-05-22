@@ -38,6 +38,9 @@ public class GoapSetConfigFactory : GoapSetFactoryBase
 
 		builder.AddGoal<DeploySiphonGoal>()
 		.AddCondition<IsSiphonDeployed>(Comparison.GreaterThanOrEqual, 1);
+
+		builder.AddGoal<DefendSiphonGoal>()
+		.AddCondition<IsSiphoning>(Comparison.GreaterThanOrEqual, 1);
 	}
 
 	private void BuildActions(GoapSetBuilder builder)
@@ -55,6 +58,12 @@ public class GoapSetConfigFactory : GoapSetFactoryBase
 		.SetBaseCost(4)
 		.SetInRange(2);
 
+		builder.AddAction<DefendSiphonAction>()
+		.SetTarget<DefendSiphonTarget>()
+		.AddEffect<IsSiphoning>(EffectType.Increase)
+		.SetBaseCost(4)
+		.SetInRange(Injector.AttackConfig.SensorRadius);
+
 		builder.AddAction<OverheatHostileAction>()
 		 .SetTarget<HostileTarget>()
 		 .AddEffect<IsHostileTargetOverheated>(EffectType.Increase)
@@ -65,7 +74,8 @@ public class GoapSetConfigFactory : GoapSetFactoryBase
 		builder.AddAction<CooldownAction>()
 		 .SetTarget<CooldownTarget>()
 		 .AddEffect<IsOverheated>(EffectType.Decrease)
-		 .SetBaseCost(8)
+		.SetMoveMode(ActionMoveMode.MoveBeforePerforming)
+		 .SetBaseCost(1)
 		 .SetInRange(40);
 
 		builder.AddAction<TakeCoverAction>()
@@ -92,6 +102,9 @@ public class GoapSetConfigFactory : GoapSetFactoryBase
 
 		builder.AddTargetSensor<SiphonTargetSensor>()
 		.SetTarget<SiphonableTarget>();
+
+		builder.AddTargetSensor<DefendSiphonTargetSensor>()
+		.SetTarget<DefendSiphonTarget>();
 
 		builder.AddWorldSensor<HeatSensor>()
 		.SetKey<IsOverheated>();

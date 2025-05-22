@@ -10,11 +10,14 @@ public class SiphonModel : SystemModel
 
 	public Transform arm;
 
-	float extendedTime = 5;
+	float extendedTime = 1;
 	float retractTime = 3;
 	float currentTimer = 0;
 
-	float maxSiphonDistance = 2;
+	float maxExtendDistance = 2;
+	float maxSiphonDistanceMultiplier = 5;
+
+
 	public int siphonLayerMask = ~((1 << 6) | (1 << 7));
 
 	public float dollars = 0;
@@ -38,7 +41,7 @@ public class SiphonModel : SystemModel
 	bool isLookingAtSiphonTarget()
 	{
 		RaycastHit hit;
-		if (Physics.Raycast(head.position, head.forward, out hit, maxSiphonDistance, siphonLayerMask))
+		if (Physics.Raycast(head.position, head.forward, out hit, maxExtendDistance, siphonLayerMask))
 		{
 			// Debug.Log(hit.transform.gameObject.layer);
 			if (hit.transform.gameObject.GetComponent<SiphonTarget>() != null)
@@ -57,7 +60,7 @@ public class SiphonModel : SystemModel
 	SiphonTarget currentlyLookedAtSiphonTarget()
 	{
 		RaycastHit hit;
-		if (Physics.Raycast(head.position, head.forward, out hit, maxSiphonDistance, siphonLayerMask))
+		if (Physics.Raycast(head.position, head.forward, out hit, maxExtendDistance, siphonLayerMask))
 		{
 			//Debug.Log(hit.transform.gameObject.layer);
 			if (hit.transform.gameObject.GetComponent<SiphonTarget>() != null)
@@ -80,6 +83,11 @@ public class SiphonModel : SystemModel
 	public int getSiphoningRate()
 	{
 		return currentLevel / currentLevelWithoutDamage;
+	}
+
+	public float getMaxSiphonDistance()
+	{
+		return currentLevel * maxSiphonDistanceMultiplier;
 	}
 
 	public void addDollars(float amount)

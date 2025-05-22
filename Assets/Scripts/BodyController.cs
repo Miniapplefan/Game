@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Animations.Rigging;
 using static BodyInfo;
 using static Limb;
@@ -18,9 +19,11 @@ public class BodyController : MonoBehaviour
 
 	bool isDead = false;
 
-	CoolingModel cooling;
+	[HideInInspector]
+	public CoolingModel cooling;
 
-	HeatContainer heatContainer;
+	[HideInInspector]
+	public HeatContainer heatContainer;
 	private Coroutine decrementCoroutine = null;
 	public GameObject coolingGauge;
 	Vector3 coolingGaugeScaleCache;
@@ -53,9 +56,15 @@ public class BodyController : MonoBehaviour
 	public Rigidbody ragdollCore;
 	public GameObject headObject;
 	public GameObject aimCam;
+	public bool isKnockbacked = false;
+	private float knockbackTimer;
+
+	private NavMeshAgent agent;
+	private Vector3 agentDestination;
+	private float minKnockbackDuration = 0.000001f;
 
 	public float repairDelay = 50f;
-	private Dictionary<RepairTarget, float> damagedLimbs = new Dictionary<RepairTarget, float>();
+	public Dictionary<RepairTarget, float> damagedLimbs = new Dictionary<RepairTarget, float>();
 	private List<RepairTarget> toRepair = new List<RepairTarget>();
 
 	public class RepairTarget
@@ -135,6 +144,7 @@ public class BodyController : MonoBehaviour
 		else
 		{
 			input = GetComponent<AIController>();
+			agent = GetComponentInParent<NavMeshAgent>();
 			isAI = true;
 		}
 
@@ -220,19 +230,21 @@ public class BodyController : MonoBehaviour
 	{
 		legs.HandleTagging(i.limb, i.impactForce);
 		weapons.HandleDisruption(i.limb);
+		ApplyKnockback(i.impactVector, i.limb);
 		if (cooling.isOverheated)
 		{
 			DamageSystem(i);
 		}
 		else
 		{
-			heatContainer.IncreaseHeat(this, i.amount);
+			//heatContainer.IncreaseHeat(this, i.amount);
 			//cooling.IncreaseHeat(this, i.amount);
 		}
 	}
 
 	public void DamageSystem(DamageInfo i)
 	{
+		head.Damage(1);
 		if (i.limb.specificLimb == Limb.LimbID.none)
 		{
 			GetSystem(i.limb.linkedSystem).Damage(1);
@@ -274,6 +286,26 @@ public class BodyController : MonoBehaviour
 
 	public void doLimbRepairs()
 	{
+		if (legs.leftLegHealth < legs.currentLevelWithoutDamage)
+		{
+			RepairTarget target;
+			target = new RepairTarget(legs, LimbID.leftLeg);
+			if (!damagedLimbs.ContainsKey(target))
+			{
+				damagedLimbs.Add(target, Time.time + repairDelay);
+			}
+		}
+
+		if (legs.rightLegHealth < legs.currentLevelWithoutDamage)
+		{
+			RepairTarget target;
+			target = new RepairTarget(legs, LimbID.rightLeg);
+			if (!damagedLimbs.ContainsKey(target))
+			{
+				damagedLimbs.Add(target, Time.time + repairDelay);
+			}
+		}
+
 		foreach (var entry in damagedLimbs)
 		{
 			SystemModel limb = entry.Key.system;
@@ -281,6 +313,7 @@ public class BodyController : MonoBehaviour
 
 			if (Time.time >= repairTime)
 			{
+				head.Repair(1);
 				if (entry.Key.specificLimb == Limb.LimbID.none)
 				{
 					limb.Repair(1);
@@ -296,14 +329,22 @@ public class BodyController : MonoBehaviour
 							legs.healRightLeg(1);
 							break;
 						case LimbID.head:
-							head.Repair(1);
+							// head.Repair(1);
 							break;
 					}
 				}
-				if (limb.currentLevelWithoutDamage == limb.currentLevel || legs.leftLegHealth == limb.currentLevel || legs.rightLegHealth == limb.currentLevel)
+				if ((limb.currentLevelWithoutDamage == limb.currentLevel && entry.Key.system != legs) || (entry.Key.specificLimb == LimbID.leftLeg && legs.leftLegHealth == limb.currentLevelWithoutDamage) || (entry.Key.specificLimb == LimbID.rightLeg && legs.rightLegHealth == limb.currentLevelWithoutDamage))
 				{
 					//Debug.Log("Repaired " + limb.name);
 					toRepair.Add(entry.Key);
+
+					// string dict = "[";
+					// foreach (RepairTarget l in toRepair)
+					// {
+					// 	dict += l.system + ", " + l.specificLimb + " | ";
+					// }
+					// dict += "]";
+					// Debug.Log(dict);
 				}
 			}
 			else
@@ -311,11 +352,23 @@ public class BodyController : MonoBehaviour
 				//Debug.Log("Time current: " + Time.time + " Time of repair: " + repairTime);
 			}
 		}
-
+		var dlen = toRepair.ToArray().Length;
 		// Remove fully repaired limbs
 		foreach (RepairTarget limb in toRepair)
 		{
 			damagedLimbs.Remove(limb);
+		}
+		var dlenafter = toRepair.ToArray().Length;
+
+		if (dlen > dlenafter)
+		{
+			string dict = "[";
+			foreach (RepairTarget limb in toRepair)
+			{
+				dict += limb.system + ", " + limb.specificLimb + " | ";
+			}
+			dict += "]";
+			Debug.Log(dict);
 		}
 	}
 
@@ -607,6 +660,104 @@ public class BodyController : MonoBehaviour
 		coolingGauge.transform.localScale = coolingGaugeScaleCache * Mathf.Clamp((heatContainer.currentTemperature + 0.01f) / cooling.GetMaxHeat(), 0, 1f);
 	}
 
+	private Vector3 KnockbackHeightCheck = new Vector3(0, 1f, 0);
+	private void ApplyKnockback(Vector3 force, Limb l)
+	{
+		isKnockbacked = true;
+		if (isAI)
+		{
+			agentDestination = agent.destination;
+		}
+		// if (agent != null)
+		// {
+		// 	agent.enabled = false;
+		// }
+
+		bool backTooCloseToWall = false;
+		RaycastHit hit;
+		if (Physics.Raycast(transform.position + KnockbackHeightCheck, -transform.forward, out hit, 2.0f, aimMask))
+		{
+			backTooCloseToWall = true;
+		}
+
+		if (!backTooCloseToWall)
+		{
+			if (cooling.isOverheated)
+			{
+				rb.AddForce((force * 2));
+
+			}
+			else
+			{
+				rb.AddForce((force / 3) * (1 - legs.getTagging()) * GetKnockbackFromLimb(l));
+			}
+		}
+		else
+		{
+			rb.AddForce((force / 8) * (1 - legs.getTagging()) * GetKnockbackFromLimb(l));
+		}
+		knockbackTimer = minKnockbackDuration;
+	}
+
+	public float GetKnockbackFromLimb(Limb l)
+	{
+		switch (l.specificLimb)
+		{
+			case Limb.LimbID.leftLeg:
+				return 0.5f;
+			case Limb.LimbID.rightLeg:
+				return 0.5f;
+			case Limb.LimbID.torso:
+				return 1f;
+			case Limb.LimbID.head:
+				return 0.75f;
+			default:
+				return 0.2f;
+		}
+	}
+
+	private void HandleKnockback()
+	{
+		if (knockbackTimer > 0 && isKnockbacked == true)
+		{
+			knockbackTimer -= Time.deltaTime;
+		}
+		else
+		{
+			if (rb.velocity.magnitude < 0.05f && rb.velocity.y < 0.01f && isKnockbacked == true)
+			{
+				NavMeshAgent agent = GetComponentInParent<NavMeshAgent>();
+				isKnockbacked = false;
+				rb.velocity = Vector3.zero;
+				rb.angularVelocity = Vector3.zero;
+				transform.localPosition.Set(0, transform.localPosition.y, 0);
+				// Transform parentTransform = GetComponentInParent<Transform>();
+				// parentTransform.position = transform.position;
+				if (agent != null)
+				{
+					float yPos = transform.localPosition.y;
+					agent.enabled = true;
+					agent.Warp(rb.transform.position);
+					rb.transform.localPosition = new Vector3(0, yPos, 0);
+					// Debug.Log(agent.hasPath);
+					agent.ResetPath();
+					agent.SetDestination(agentDestination);
+					//this.transform.SetParent(parent.transform, true);
+				}
+			}
+		}
+		// if (agent != null && Vector3.Distance(agent.transform.position, rb.transform.position) > 0.01f)
+		// {
+		// 	agent.Warp(rb.transform.position);
+		// }
+	}
+
+	private void ClampRigidbodyYPos()
+	{
+		float yPos = Mathf.Clamp(rb.transform.position.y, 1.6f, Mathf.Infinity);
+		rb.transform.position = new Vector3(rb.transform.position.x, yPos, rb.transform.position.z);
+	}
+
 	private void doSiphoning()
 	{
 		if (input.getSiphon())
@@ -702,10 +853,12 @@ public class BodyController : MonoBehaviour
 			doLimbRepairs();
 		}
 		legs.DoMoveDeacceleration();
-		legs.RecoverFromTagging();
+		legs.RecoverFromTagging(1 - Mathf.Pow(heatContainer.currentTemperature / cooling.GetMaxHeat(), 2));
 		legs.UpdateMovementTick(Time.deltaTime);
 		weapons.RecoverFromDisruption();
 		doCooling();
+		HandleKnockback();
+		ClampRigidbodyYPos();
 		setJointStrength();
 		SetRigPosture();
 
@@ -714,7 +867,7 @@ public class BodyController : MonoBehaviour
 		healthIndicator.text = head.health.ToString();
 		// if (isAI)
 		// {
-		// 	Debug.Log(legs.taggingModifier);
+		// 	Debug.Log(agent.hasPath);
 		// }
 	}
 }

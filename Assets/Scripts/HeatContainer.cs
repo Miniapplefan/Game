@@ -1,46 +1,74 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using Unity.Mathematics;
+using System.Collections;
+using System.Linq;
 
 public class HeatContainer : MonoBehaviour
 {
-	public enum ContainerType { Water, Air, Mech }
+	public enum ContainerType { Water, Air, Structural, Solid }
 	public ContainerType containerType;
 
 	public HeatMaterialScriptableObject heatMat;
 
-	public float currentTemperature = 0f; // Current heat level
-	public float maxTemperature = 10f; // Max heat capacity
+	public float currentTemperature = 21f; // Current heat level
+	public float maxTemperature; // Max heat capacity
 	public float specificHeatCapacity;     // Specific heat capacity, different for each type
 	public float mass = 1f;                // Mass of the object (could be volume for air/water)
 	public float fluidInteractionConstant;
 	public float thermalConductivity;
 	public HeatContainer currentAir;
-	public float ambientTemperature = 0f; // Ambient temp for dissipation
+	public bool isBeingFlamed;
+	public HeatMaterialScriptableObject structuralMaterial;
+	public float ambientTemperature = 70f; // Ambient temp for dissipation
 	public float dissipationRateFromAirCurrents = 1f; // Dissipation rate from air currents 
 	public float dissipationRate = 1.0f; // Dissipation rate (passive or for heat transfer)
 	public CoolingModel coolingModel; // Cooling model for mechs
 	public bool isInTransferZone = false; // Tracks if this object is in a heat transfer zone
+	bool isFlammable = false;
+	public bool shouldApplyRadiativeHeating = false;
+	public HeatBubble heatBubble;
 	public event Action OnOverheated; // Overheat event (for mechs)
 
-	private List<HeatContainer> transferTargets = new List<HeatContainer>(); // For multi-way transfer
+	public List<HeatContainer> transferTargets = new List<HeatContainer>(); // For multi-way transfer
 
 	float coolingConstant = 0.02f;
 
 	void Awake()
 	{
+		if (containerType == ContainerType.Structural)
+		{
+			return;
+		}
+
 		InitFromHeatMaterialSO();
 		// If a mech with a cooling model, initialize
+		if (containerType == ContainerType.Air)
+		{
+			createStruturalHeatContainer();
+		}
 	}
 
 	// Method to set specific heat capacity based on container type
-	private void InitFromHeatMaterialSO()
+	public void InitFromHeatMaterialSO()
 	{
+		if (heatMat == null)
+		{
+			Debug.LogWarning("No HeatMaterialScriptableObject set for " + gameObject.name + " if this is a Structural HeatContainer ignore this");
+			return;
+		}
 		containerType = heatMat.containerType;
 		specificHeatCapacity = heatMat.specificHeatCapacity;
-		//mass = heatMat.mass;
+		mass = CalculateMass();
 		fluidInteractionConstant = heatMat.fluidInteractionConstant;
 		thermalConductivity = heatMat.thermalConductivity;
+		maxTemperature = heatMat.ignitionTemperature * heatMat.burnTemperatureMultiplier;
+
+		if (GetComponent<Flammable>() != null)
+		{
+			isFlammable = true;
+		}
 	}
 
 	public void InitCoolingModel(CoolingModel model)
@@ -59,16 +87,19 @@ public class HeatContainer : MonoBehaviour
 			CalculateMass();
 		}
 
-		Collider[] hitColliders = Physics.OverlapSphere(transform.position, 5f);  // Radius can be adjusted
+		Collider[] hitColliders = Physics.OverlapSphere(transform.position, 1f);  // Radius can be adjusted
 		foreach (var hitCollider in hitColliders)
 		{
 			HeatContainer otherHeatContainer = hitCollider.GetComponent<HeatContainer>();
-			if (otherHeatContainer != null && !transferTargets.Contains(otherHeatContainer))
+			if (otherHeatContainer != null && !transferTargets.Contains(otherHeatContainer) && otherHeatContainer != this)
 			{
+				if (containerType == ContainerType.Solid && otherHeatContainer.containerType == ContainerType.Solid) continue;
+
 				transferTargets.Add(otherHeatContainer);
 				if (otherHeatContainer.containerType == ContainerType.Air)
 				{
 					currentAir = otherHeatContainer;
+					ambientTemperature = currentAir.currentTemperature;
 				}
 				// if (containerType == ContainerType.Water)
 				// {
@@ -76,19 +107,35 @@ public class HeatContainer : MonoBehaviour
 				// }
 			}
 		}
+		StartCoroutine("CheckForHeatBubble");
 	}
 
 	// Calculate max heat capacity based on volume of collider (optional for different container types)
-	void CalculateMass()
+	float CalculateMass()
 	{
-		Collider heatCollider = GetComponent<Collider>();
-		if (heatCollider != null)
+		if (containerType == ContainerType.Structural)
 		{
-			float volume = GetColliderVolume(heatCollider);
-			mass = volume * heatMat.mass; // Adjust scale for heat capacity
-																		//Debug.Log("Calculated mass for: " + heatMat.containerType + " = " + mass);
-
+			return currentAir.GetColliderVolume(currentAir.GetComponent<BoxCollider>()) * heatMat.mass;
 		}
+
+		Collider heatCollider = GetComponent<Collider>();
+
+		float volume = GetColliderVolume(heatCollider);
+		return volume * heatMat.mass; // Adjust scale for heat capacity
+																	//Debug.Log("Calculated mass for: " + heatMat.containerType + " = " + mass);
+	}
+
+	void createStruturalHeatContainer()
+	{
+		var structuralObject = new GameObject("Structure");
+		structuralObject.AddComponent<BoxCollider>();
+		structuralObject.AddComponent<HeatContainer>();
+		var structuralHeatCont = structuralObject.GetComponent<HeatContainer>();
+		structuralHeatCont.heatMat = structuralMaterial;
+		structuralHeatCont.currentAir = this;
+		structuralHeatCont.InitFromHeatMaterialSO();
+
+		transferTargets.Add(structuralObject.GetComponent<HeatContainer>());
 	}
 
 	void FixedUpdate()
@@ -96,6 +143,7 @@ public class HeatContainer : MonoBehaviour
 		//DissipateHeat();
 		foreach (HeatContainer target in transferTargets)
 		{
+			//Debug.Log(gameObject.name + " transferring heat to " + target.gameObject.name);
 			TransferHeat(target);
 		}
 		// Always transfer heat if there are targets
@@ -172,11 +220,69 @@ public class HeatContainer : MonoBehaviour
 	// 	}
 	// }
 
+	IEnumerator CheckForHeatBubble()
+	{
+		yield return new WaitForSeconds(UnityEngine.Random.Range(0.1f, 0.5f));
+		ApplyRadiativeHeating();
+		StartCoroutine("CheckForHeatBubble");
+	}
+
+	void ApplyRadiativeHeating()
+	{
+		if (shouldApplyRadiativeHeating)
+		{
+			if (heatBubble != null)
+			{
+				return;
+			}
+			else
+			{
+				Collider[] colliders = Physics.OverlapSphere(transform.position, 1f);
+				foreach (var col in colliders)
+				{
+					if (col.TryGetComponent(out HeatBubble target))
+					{
+						heatBubble = target;
+						target.AddContributer(gameObject.GetComponent<HeatContainer>(), true);
+						//if (gameObject.name == "Wood Log (9)") Debug.Log("joining heatbubble " + target.gameObject.name);
+						return;
+					}
+				}
+			}
+			//if (gameObject.name == "Wood Log (9)") Debug.Log("no heatbubble found");
+			createHeatBubble();
+		}
+	}
+
+	public void createHeatBubble()
+	{
+		var heatBubbleObject = new GameObject("HeatBubble");
+
+		// Add required components
+		var sphereCollider = heatBubbleObject.AddComponent<SphereCollider>();
+		sphereCollider.isTrigger = true;
+
+		heatBubbleObject.AddComponent<HeatBubble>();
+		heatBubble = heatBubbleObject.GetComponent<HeatBubble>();
+		heatBubble.bubbleStarter = GetComponent<Flammable>();
+		heatBubble.AddContributer(this, true);
+
+		// Set transform to world position and rotation of the parent
+		heatBubbleObject.transform.position = Vector3.zero;
+		heatBubbleObject.transform.rotation = Quaternion.identity;
+		heatBubbleObject.transform.localScale = new Vector3(1 / this.transform.localScale.x, 1 / this.transform.localScale.y, 1 / this.transform.localScale.z);
+
+		// Parent it without preserving world transform — this keeps it unskewed
+		heatBubbleObject.transform.SetParent(this.transform, false);
+	}
+
 	// Handles multi-way heat transfer
 	public void TransferHeat(HeatContainer otherContainer)
 	{
 		if (containerType == ContainerType.Air || otherContainer.containerType == ContainerType.Air)
 		{
+			//Debug.Log(gameObject.name + " is transferring to " + otherContainer.gameObject.name);
+
 			// Use Newton's Law of Cooling for the air
 			ApplyNewtonsLawOfCooling(otherContainer);
 		}
@@ -200,7 +306,7 @@ public class HeatContainer : MonoBehaviour
 			float bodyTemperature = bodyContainer.GetTemperature();
 
 			// Calculate the temperature difference
-			float temperatureDifference = bodyTemperature - airTemperature;
+			float temperatureDifference = isBeingFlamed ? 1 : bodyTemperature - airTemperature;
 
 			// Mech overheating case
 			if (coolingModel != null && coolingModel.isOverheated)
@@ -216,9 +322,13 @@ public class HeatContainer : MonoBehaviour
 				float bodyTempChange = heatTransfer / (bodyContainer.mass * bodyContainer.specificHeatCapacity);
 				float airTempChange = heatTransfer / (airContainer.mass * airContainer.specificHeatCapacity);
 
+				// Exchange heat
+				bodyContainer.IncreaseHeat(airContainer.gameObject, -heatTransfer);
+				airContainer.IncreaseHeat(airContainer.gameObject, heatTransfer);
+
 				// Update temperatures
-				bodyContainer.currentTemperature -= bodyTempChange;
-				airContainer.currentTemperature += airTempChange;
+				// bodyContainer.currentTemperature -= bodyTempChange;
+				// airContainer.currentTemperature += airTempChange;
 
 				// Clamp the body temperature to the minimumTemperature to prevent overcooling below the limit
 				currentTemperature = Mathf.Max(bodyContainer.currentTemperature, minTemperature);
@@ -234,28 +344,36 @@ public class HeatContainer : MonoBehaviour
 
 					//					Debug.Log(heatTransfer);
 
-					// If the Mech is hotter than the Air, heat should flow from the Mech to the Air
+					// If the Objects is hotter than the Air, heat should flow from the Object to the Air
 					if (temperatureDifference > 0)
 					{
 						// Mechs have active cooling which allows them to dissipate heat faster into the air
 						heatTransfer *= bodyContainer.dissipationRate;
-						// Heat flows from Mech to Air
+						// Heat flows from Object to Air
 						float bodyTempChange = heatTransfer / (bodyContainer.mass * bodyContainer.specificHeatCapacity);
 						float airTempChange = heatTransfer / (airContainer.mass * airContainer.specificHeatCapacity);
 
-						// Update temperatures
-						bodyContainer.currentTemperature -= bodyTempChange;
-						airContainer.currentTemperature += airTempChange;
+						// Exchange heat
+						bodyContainer.IncreaseHeat(airContainer.gameObject, -heatTransfer);
+						airContainer.IncreaseHeat(airContainer.gameObject, heatTransfer);
+
+						// // Update temperatures
+						// bodyContainer.currentTemperature -= bodyTempChange;
+						// airContainer.currentTemperature += airTempChange;
 					}
 					else
 					{
-						// Heat flows from Air to Mech (Air is hotter)
+						// Heat flows from Air to Object (Air is hotter)
 						float bodyTempChange = heatTransfer / (bodyContainer.mass * bodyContainer.specificHeatCapacity);
 						float airTempChange = heatTransfer / (airContainer.mass * airContainer.specificHeatCapacity);
 
-						// Update temperatures
-						bodyContainer.currentTemperature += bodyTempChange;
-						airContainer.currentTemperature -= airTempChange;
+						// Exchange heat
+						bodyContainer.IncreaseHeat(airContainer.gameObject, heatTransfer);
+						airContainer.IncreaseHeat(airContainer.gameObject, -heatTransfer);
+
+						// // Update temperatures
+						// bodyContainer.currentTemperature += bodyTempChange;
+						// airContainer.currentTemperature -= airTempChange;
 					}
 
 					// Ensure temperatures remain within realistic bounds
@@ -298,18 +416,26 @@ public class HeatContainer : MonoBehaviour
 				float tempChangeThis = heatTransfer / (mass * specificHeatCapacity);
 				float tempChangeOther = heatTransfer / (otherContainer.mass * otherContainer.specificHeatCapacity);
 
-				// Update the temperatures of both containers
-				currentTemperature -= tempChangeThis;
-				otherContainer.currentTemperature += tempChangeOther;
+				// Exchange heat
+				IncreaseHeat(otherContainer, -heatTransfer);
+				otherContainer.IncreaseHeat(this, heatTransfer);
+
+				// // Update the temperatures of both containers
+				// currentTemperature -= tempChangeThis;
+				// otherContainer.currentTemperature += tempChangeOther;
 			}
 			else if (thisTemperature < otherTemperature)  // Transfer from the other container to this one
 			{
 				float tempChangeThis = heatTransfer / (mass * specificHeatCapacity);
 				float tempChangeOther = heatTransfer / (otherContainer.mass * otherContainer.specificHeatCapacity);
 
+				// Exchange heat
+				IncreaseHeat(otherContainer, heatTransfer);
+				otherContainer.IncreaseHeat(this, -heatTransfer);
+
 				// Update the temperatures of both containers
-				currentTemperature += tempChangeThis;
-				otherContainer.currentTemperature -= tempChangeOther;
+				// currentTemperature += tempChangeThis;
+				// otherContainer.currentTemperature -= tempChangeOther;
 			}
 			if (coolingModel != null)
 			{
@@ -340,9 +466,12 @@ public class HeatContainer : MonoBehaviour
 	// Method to add a transfer target when entering heat transfer zone
 	private void OnTriggerEnter(Collider other)
 	{
+		if (shouldApplyRadiativeHeating) return;
 		HeatContainer otherHeatContainer = other.GetComponent<HeatContainer>();
 		if (otherHeatContainer != null && !transferTargets.Contains(otherHeatContainer))
 		{
+			//Debug.Log("I, " + gameObject.name + " transferring to " + other.gameObject.name);
+
 			transferTargets.Add(otherHeatContainer);
 		}
 	}
@@ -357,29 +486,48 @@ public class HeatContainer : MonoBehaviour
 		}
 	}
 
-	float GetColliderVolume(Collider collider)
+	public float GetColliderVolume(Collider collider)
 	{
-		if (collider is BoxCollider box)
+		if (collider.GetType() == typeof(BoxCollider))
 		{
-			return box.size.x * box.size.y * box.size.z;
+			BoxCollider b = (BoxCollider)collider;
+			Vector3 worldSize = Vector3.Scale(b.size, transform.lossyScale);
+			//Debug.Log("box volume for: " + collider.gameObject.name + " is " + b.size.x * b.size.y * b.size.z);
+			return worldSize.x * worldSize.y * worldSize.z;
 		}
-		else if (collider is SphereCollider sphere)
+		else if (collider.GetType() == typeof(SphereCollider))
 		{
-			return (4f / 3f) * Mathf.PI * Mathf.Pow(sphere.radius, 3);
+			SphereCollider s = (SphereCollider)collider;
+			//Debug.Log("sphere volume for: " + collider.gameObject.name + " is " + (4f / 3f) * Mathf.PI * Mathf.Pow(s.radius, 3));
+			return (4f / 3f) * Mathf.PI * Mathf.Pow(s.radius, 3);
 		}
+		//Debug.Log("default volume for: " + collider.gameObject.name);
 		return 1f; // Default to 1 if no volume
 	}
 
 	// Increase heat method (for laser hits, etc.)
 	public void IncreaseHeat(object sender, float amount)
 	{
-		float temperatureChange = amount / (mass * specificHeatCapacity);
-		currentTemperature += temperatureChange;
-
 		// Check for overheating based on temperature
 		if (currentTemperature >= maxTemperature && OnOverheated != null)
 		{
 			OnOverheated?.Invoke();
+		}
+		if (coolingModel != null && coolingModel.isOverheated && amount > 0) return;
+
+		if (isFlammable && currentTemperature >= heatMat.ignitionTemperature * heatMat.burnTemperatureMultiplier && amount > 0)
+		{
+			return;
+		}
+
+		// float thermalInertia = Mathf.Sqrt(heatMat.thermalConductivity * heatMat.mass * heatMat.specificHeatCapacity);
+		// float thermalInertiaScalingFactor = thermalInertia / 1000; // normalize around a baseline
+
+		float temperatureChange = amount / (mass * specificHeatCapacity);
+		currentTemperature += temperatureChange;
+		if (isFlammable)
+		{
+			currentTemperature = Mathf.Clamp(currentTemperature, -200, heatMat.ignitionTemperature * heatMat.burnTemperatureMultiplier);
 		}
 	}
 }

@@ -43,7 +43,7 @@ public abstract class SystemModel
         currentLevel = Mathf.Clamp(currentLevel - amount, 0, currentLevel);
     }
 
-    public void Repair(int amount)
+    public virtual void Repair(int amount)
     {
         currentLevel = Mathf.Clamp(currentLevel + amount, currentLevel, currentLevelWithoutDamage);
     }

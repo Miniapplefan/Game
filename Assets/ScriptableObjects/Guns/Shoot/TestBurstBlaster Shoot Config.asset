@@ -17,13 +17,16 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 576
   Spread: {x: 0.015, y: 0.015, z: 0}
+  maxRange: 100
   isBurst: 1
   burst_numShots: 8
   burst_delayBetweenShots: 0.2
   bulletsPerShot: 1
+  prepTime: 0
+  prepIndicator: {fileID: 0}
   fireRate: 3
   recoil: 30
   impactForce: 200
   marchingCubesDamage: 1
-  heatPerShot: 300000
+  heatPerShot: 20000000
   hitParticles: {fileID: 9056568595549153658, guid: d62a75f2eddd043b4ab15b49376c3560, type: 3}

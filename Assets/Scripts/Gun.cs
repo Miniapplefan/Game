@@ -173,15 +173,27 @@ public class Gun : MonoBehaviour
 	private void ManageHit(RaycastHit hit)
 	{
 		Rigidbody hitRb = hit.collider.GetComponent<Rigidbody>();
+		HeatContainer heatContainer = hit.collider.GetComponent<HeatContainer>();
+		if (heatContainer == null)
+		{
+			heatContainer = hit.collider.GetComponentInParent<HeatContainer>();
+		}
 		LimbToSystemLinker limb = hit.collider.GetComponent<LimbToSystemLinker>();
 		MarchingCubesGenerator marchingCubes = hit.collider.GetComponent<MarchingCubesGenerator>();
+		BodyController bodyController = hit.collider.GetComponentInParent<BodyController>();
+		BodyVFXController bodyVFXController = hit.collider.GetComponentInParent<BodyVFXController>();
 
+		if (heatContainer != null)
+		{
+			heatContainer.IncreaseHeat(this, gunData.shootConfig.heatPerShot);
+		}
 		if (limb != null)
 		{
 			Vector3 impulse = shootSystem.transform.forward * gunData.shootConfig.impactForce;
 			//Debug.Log("hit limb");
 			DamageInfo damageInfo = new DamageInfo(gunData.shootConfig.heatPerShot);
 			damageInfo.impactForce = gunData.shootConfig.impactForce;
+			damageInfo.impactVector = impulse;
 			limb.TakeDamage(damageInfo);
 			if (limb.limb.specificLimb == Limb.LimbID.rightArm)
 			{
@@ -194,8 +206,6 @@ public class Gun : MonoBehaviour
 			// StartCoroutine(
 			// 		PlayHitParticles(hit));
 
-			// TODO make these hit particles object pooled
-			Destroy(Instantiate(gunData.shootConfig.hitParticles, hit.point, Quaternion.Euler(hit.normal)).gameObject, 1f);
 		}
 		else if (hitRb != null)
 		{
@@ -206,6 +216,18 @@ public class Gun : MonoBehaviour
 		if (marchingCubes != null)
 		{
 			marchingCubes.TakeDamage(hit.point, gunData.shootConfig.marchingCubesDamage);
+		}
+		if (bodyVFXController != null && bodyController != null)
+		{
+			if (bodyController.cooling.isOverheated)
+			{
+				bodyVFXController.doBloodParticles(hit.point, Quaternion.Euler(hit.normal));
+			}
+			else
+			{
+				// TODO make these hit particles object pooled
+				Destroy(Instantiate(gunData.shootConfig.hitParticles, hit.point, Quaternion.Euler(hit.normal)).gameObject, 1f);
+			}
 		}
 	}
 

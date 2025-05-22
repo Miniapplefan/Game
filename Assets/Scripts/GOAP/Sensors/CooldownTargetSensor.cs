@@ -6,6 +6,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using UnityEngine.AI;
 using CrashKonijn.Goap.Classes.References;
+using System.Collections.Generic;
 
 public class CooldownTargetSensor : LocalTargetSensorBase, IInjectable
 {
@@ -33,69 +34,117 @@ public class CooldownTargetSensor : LocalTargetSensorBase, IInjectable
 		Vector3 environmentalCoolingElementPosition = GetEnvironmentalCoolingPosition(agent);
 		Vector3 position;
 
-		position = 2 * Vector3.Distance(currentPosition, coverPosition) <
-	 Vector3.Distance(currentPosition, environmentalCoolingElementPosition) ? coverPosition : environmentalCoolingElementPosition;
+		//position = 2 * Vector3.Distance(currentPosition, coverPosition) <
+		//Vector3.Distance(currentPosition, environmentalCoolingElementPosition) ? coverPosition : environmentalCoolingElementPosition;
+
+		position = environmentalCoolingElementPosition;
 
 		return new PositionTarget(position);
 	}
 
 	private Vector3 GetEnvironmentalCoolingPosition(IMonoAgent agent)
 	{
-		Collider closestCoolingElement = null;
+		bool targetNearby = false;
+		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
+		{
+			targetNearby = true;
+		}
+
+		Vector3 closestCoolingPostion = Vector3.zero;
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, EnvironmentalCoolingColliders, AttackConfig.EnvironmentalCoolingLayerMask) > 0)
 		{
-			// Assume the AI has a HeatContainer attached to it
 			HeatContainer myHeatContainer = agent.GetComponentInChildren<HeatContainer>();
-			// Debug.Log("My Heat: " + myHeatContainer.GetTemperature());
-
 			float closestDistance = Mathf.Infinity;
 
 			for (int i = 0; i < EnvironmentalCoolingColliders.Length; i++)
 			{
 				Collider environmentalCollider = EnvironmentalCoolingColliders[i];
-				if (environmentalCollider == null || environmentalCollider.gameObject.activeSelf == false)
+
+				// The collider is not active, skip it
+				if (environmentalCollider == null || !environmentalCollider.gameObject.activeSelf)
 				{
 					continue;
 				}
 
-				// Check if the environmental object has a HeatContainer
-				//Debug.Log(environmentalCollider.gameObject.name);
-				// Component[] components = environmentalCollider.GetComponents(typeof(Component));
-				// foreach (Component component in components)
-				// {
-				// 	Debug.Log(component.ToString());
-				// }
-
-				bool tempCheck = true;
 				HeatContainer environmentalHeatContainer = environmentalCollider.gameObject.GetComponent<HeatContainer>();
-				if (environmentalHeatContainer != null)
+				bool tempCheck = environmentalHeatContainer != null && environmentalHeatContainer.GetTemperature() < myHeatContainer.GetTemperature();
+
+				// The temperature of the collider is hotter than us, skip it
+				if (environmentalHeatContainer != null && !tempCheck)
 				{
-					tempCheck = environmentalHeatContainer.GetTemperature() < myHeatContainer.GetTemperature();
+					continue;
 				}
 
-				float dist = Vector3.Distance(agent.transform.position, environmentalCollider.transform.position);
-				bool distCheck = dist < closestDistance;
+				// TODO: Sample random positions within the collider until we find a position that NavMesh.SamplePosition returns true for.
+				Vector3 validPosition = Vector3.zero;
+				bool foundValidPosition = false;
+				int maxAttempts = 30; // Limit the number of sampling attempts
+				int attempts = 0;
 
-				if (tempCheck && distCheck)
+				while (!foundValidPosition && attempts < maxAttempts)
+				{
+					// Generate a random point within the collider's bounds
+					Vector3 randomPoint = new Vector3(
+							Random.Range(environmentalCollider.bounds.min.x, environmentalCollider.bounds.max.x),
+							Random.Range(environmentalCollider.bounds.min.y, environmentalCollider.bounds.max.y),
+							Random.Range(environmentalCollider.bounds.min.z, environmentalCollider.bounds.max.z)
+					);
+
+					// Check if the random point is inside the collider (bounds are axis-aligned, so we need to verify)
+					if (environmentalCollider.ClosestPoint(randomPoint) == randomPoint)
+					{
+						bool notTooCloseToTarget = true;
+						if (targetNearby)
+						{
+							if (Vector3.Distance(randomPoint, Colliders[0].transform.position) < 3.0f)
+							{
+								notTooCloseToTarget = false;
+							}
+						}
+						// 	Debug.Log("inside");
+						// 	// Check if the point is on the NavMesh
+						if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, 2.0f, NavMesh.AllAreas) && notTooCloseToTarget)
+						{
+							//Debug.Log("valid pos");
+							validPosition = hit.position;
+							foundValidPosition = true;
+						}
+					}
+
+					attempts++;
+				}
+
+				if (!foundValidPosition)
+				{
+					continue; // Skip this collider if no valid position was found
+				}
+
+				// Continue with the distance calculations
+				float dist = Vector3.Distance(agent.transform.position, validPosition);
+
+				if (dist < closestDistance)
 				{
 					closestDistance = dist;
-					closestCoolingElement = environmentalCollider;
-				}
-				else
-				{
-					continue;
+					closestCoolingPostion = validPosition;
 				}
 			}
 		}
-		if (closestCoolingElement != null)
+
+		if (closestCoolingPostion != Vector3.zero)
 		{
-			return closestCoolingElement.transform.position;
+			// Debug.Log("cooling wasn't null");
+			// Vector3 closestPointOnCollider = closestCoolingElement.ClosestPoint(agent.transform.position);
+			// if (NavMesh.SamplePosition(closestPointOnCollider, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+			// {
+			//Debug.Log("Found cooling position");
+			return closestCoolingPostion;
+			//}
 		}
-		else
-		{
-			return new Vector3(Mathf.Infinity, Mathf.Infinity, Mathf.Infinity);
-		}
+
+		//Debug.Log("Falling back to cover position");
+		return GetCoverPosition(agent);
 	}
+
 
 	private Vector3 GetCoverPosition(IMonoAgent agent)
 	{
@@ -104,101 +153,165 @@ public class CooldownTargetSensor : LocalTargetSensorBase, IInjectable
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
 			RaycastHit hit1;
-			Vector3 direction1 = (Colliders[0].transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
-			if (Physics.Raycast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+			Vector3 direction1 = (Colliders[0].gameObject.GetComponentInParent<BodyState>().headCollider.transform.position - agent.GetComponentInChildren<BodyState>().headCollider.transform.position).normalized;
+			//+ AttackConfig.EyeLevel
+			if (Physics.SphereCast(agent.GetComponentInChildren<BodyState>().headCollider.transform.position, AttackConfig.LineOfSightSphereCastRadius, direction1, out hit1, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
 			{
 				if (hit1.transform.GetComponent<PlayerController>() != null)
 				{
-					float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
+					//********
+					// float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
 
-					// TODO Huge frame drop spike related to this while loop. spread the work out over multiple frames somehow
+					// // TODO Huge frame drop spike related to this while loop. spread the work out over multiple frames somehow
+					// while (count < 10)
+					// {
+					// 	Vector3 randomPointOnCircle = GetRandomPointOnCircle(Colliders[0].transform.position, distanceToPlayer);
+					// 	float distance = Vector3.Distance(agent.transform.position, randomPointOnCircle);
+
+					// 	if (distance < distanceToPlayer)
+					// 	{
+					// 		Vector3 direction2 = (Colliders[0].transform.position - randomPointOnCircle).normalized;
+					// 		RaycastHit hit2;
+					// 		if (Physics.Raycast(randomPointOnCircle, direction2, out hit2, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+					// 		{
+					// 			if (hit2.transform.GetComponent<PlayerController>() == null)
+					// 			{
+					// 				//Debug.Log("Do not see player, moving");
+					// 				return randomPointOnCircle;
+					// 			}
+					// 		}
+					// 	}
+					// 	count++;
+					// }
+					//********
+					List<Vector3> points = new List<Vector3>();
+					float lineLength = 20f; // Length of the strafing line
+					int numberOfPoints = 20; // Number of points to evaluate
+					Vector3 direction = Vector3.Cross(Vector3.up, (Colliders[0].transform.position - agent.transform.position).normalized); // Perpendicular to the player direction
+
+					for (int i = numberOfPoints - 1; i >= 0; i--) // Reverse the order
+					{
+						float t = (float)i / (numberOfPoints - 1); // Normalize to range [0, 1]
+						Vector3 point = agent.transform.position + direction * (t * lineLength - lineLength / 2);
+						points.Add(point);
+					}
+
+					Vector3 closestPoint = Vector3.zero;
+					float closestDistance = float.MaxValue;
+
+					foreach (Vector3 point in points)
+					{
+						//Debug.Log("checking points");
+						float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
+						float distanceToAI = Vector3.Distance(point, agent.transform.position);
+
+						if (distanceToAI < distanceToPlayer && !HasLineOfSight(point, Colliders[0].transform.position))
+						{
+							//Debug.Log("point within range and has los");
+							if (distanceToAI < closestDistance)
+							{
+								//Debug.Log("closer point found");
+								closestDistance = distanceToAI;
+								closestPoint = point;
+							}
+						}
+					}
+
+					if (closestPoint != Vector3.zero)
+					{
+						//						Debug.Log("Strafe");
+						return closestPoint;
+					}
+
+
 					while (count < 10)
 					{
-						Vector3 randomPointOnCircle = GetRandomPointOnCircle(Colliders[0].transform.position, distanceToPlayer);
-						float distance = Vector3.Distance(agent.transform.position, randomPointOnCircle);
-
-						if (distance < distanceToPlayer)
+						for (int i = 0; i < Colliders.Length; i++)
 						{
-							Vector3 direction2 = (Colliders[0].transform.position - randomPointOnCircle).normalized;
-							RaycastHit hit2;
-							if (Physics.Raycast(randomPointOnCircle, direction2, out hit2, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+							Colliders[i] = null;
+						}
+
+						int target = Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, TargetCollider, AttackConfig.AttackableLayerMask);
+
+						int hits = Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.ObstructionLayerMask);
+
+						int hitReduction = 0;
+						for (int i = 0; i < hits; i++)
+						{
+							if (Vector3.Distance(Colliders[i].transform.position, TargetCollider[0].transform.position) < AttackConfig.MinPlayerDistance || Colliders[i].bounds.size.y < AttackConfig.MinObstacleHeight)
 							{
-								if (hit2.transform.GetComponent<PlayerController>() == null)
+								Colliders[i] = null;
+								hitReduction++;
+							}
+						}
+						hits -= hitReduction;
+
+						System.Array.Sort(Colliders, ColliderArraySortComparer);
+
+						for (int i = 0; i < hits; i++)
+						{
+							if (NavMesh.SamplePosition(Colliders[i].transform.position, out NavMeshHit hit, 4f, navMeshAgent.areaMask))
+							{
+								if (!NavMesh.FindClosestEdge(hit.position, out hit, navMeshAgent.areaMask))
 								{
-									//Debug.Log("Do not see player, moving");
-									return randomPointOnCircle;
+									Debug.LogError($"Unable to find edge close to {hit.position}");
 								}
+
+								if (Vector3.Dot(hit.normal, (TargetCollider[0].transform.position - hit.position).normalized) < AttackConfig.HideSensitivity)
+								{
+									//Debug.Log("Llama");
+									return hit.position;
+								}
+								else
+								{
+									// Since the previous spot wasn't facing "away" enough from the target, we'll try on the other side of the object
+									if (NavMesh.SamplePosition(Colliders[i].transform.position - (TargetCollider[0].transform.position - hit.position).normalized * 2, out NavMeshHit hit2, 2f, navMeshAgent.areaMask))
+									{
+										if (!NavMesh.FindClosestEdge(hit2.position, out hit2, navMeshAgent.areaMask))
+										{
+											Debug.LogError($"Unable to find edge close to {hit2.position} (second attempt)");
+										}
+
+										if (Vector3.Dot(hit2.normal, (TargetCollider[0].transform.position - hit2.position).normalized) < AttackConfig.HideSensitivity)
+										{
+											//Debug.Log("Llama");
+											return hit2.position;
+										}
+									}
+								}
+							}
+							else
+							{
+								Debug.LogError($"Unable to find NavMesh near object {Colliders[i].name} at {Colliders[i].transform.position}");
 							}
 						}
 						count++;
+
 					}
 				}
 			}
+			Vector3 randPos = GetRandomPosition(agent);
+			while (Vector3.Distance(randPos, agent.transform.position) > Vector3.Distance(Colliders[0].transform.position, agent.transform.position))
+			{
+				randPos = GetRandomPosition(agent);
+			}
+			//Debug.Log("Random");
+			return randPos;
 		}
-
-		while (count < 50)
-		{
-			for (int i = 0; i < Colliders.Length; i++)
-			{
-				Colliders[i] = null;
-			}
-
-			int target = Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, TargetCollider, AttackConfig.AttackableLayerMask);
-
-			int hits = Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.ObstructionLayerMask);
-
-			int hitReduction = 0;
-			for (int i = 0; i < hits; i++)
-			{
-				if (Vector3.Distance(Colliders[i].transform.position, TargetCollider[0].transform.position) < AttackConfig.MinPlayerDistance || Colliders[i].bounds.size.y < AttackConfig.MinObstacleHeight)
-				{
-					Colliders[i] = null;
-					hitReduction++;
-				}
-			}
-			hits -= hitReduction;
-
-			System.Array.Sort(Colliders, ColliderArraySortComparer);
-
-			for (int i = 0; i < hits; i++)
-			{
-				if (NavMesh.SamplePosition(Colliders[i].transform.position, out NavMeshHit hit, 4f, navMeshAgent.areaMask))
-				{
-					if (!NavMesh.FindClosestEdge(hit.position, out hit, navMeshAgent.areaMask))
-					{
-						Debug.LogError($"Unable to find edge close to {hit.position}");
-					}
-
-					if (Vector3.Dot(hit.normal, (TargetCollider[0].transform.position - hit.position).normalized) < AttackConfig.HideSensitivity)
-					{
-						return hit.position;
-					}
-					else
-					{
-						// Since the previous spot wasn't facing "away" enough from the target, we'll try on the other side of the object
-						if (NavMesh.SamplePosition(Colliders[i].transform.position - (TargetCollider[0].transform.position - hit.position).normalized * 2, out NavMeshHit hit2, 2f, navMeshAgent.areaMask))
-						{
-							if (!NavMesh.FindClosestEdge(hit2.position, out hit2, navMeshAgent.areaMask))
-							{
-								Debug.LogError($"Unable to find edge close to {hit2.position} (second attempt)");
-							}
-
-							if (Vector3.Dot(hit2.normal, (TargetCollider[0].transform.position - hit2.position).normalized) < AttackConfig.HideSensitivity)
-							{
-								return hit2.position;
-							}
-						}
-					}
-				}
-				else
-				{
-					Debug.LogError($"Unable to find NavMesh near object {Colliders[i].name} at {Colliders[i].transform.position}");
-				}
-			}
-			count++;
-
-		}
+		//Debug.Log("Random");
 		return GetRandomPosition(agent);
+	}
+
+	bool HasLineOfSight(Vector3 start, Vector3 end)
+	{
+		RaycastHit hit;
+		//Physics.Raycast(start, (end - start).normalized, out hit, Mathf.Infinity)
+		if (Physics.SphereCast(start, AttackConfig.LineOfSightSphereCastRadius, (end - start).normalized, out hit, Mathf.Infinity, AttackConfig.AttackableLayerMask | AttackConfig.ObstructionLayerMask))
+		{
+			//Debug.Log(hit.transform.GetComponent<PlayerController>() != null);
+			return hit.transform.GetComponent<PlayerController>() != null;
+		}
+		return false;
 	}
 
 	public int ColliderArraySortComparer(Collider A, Collider B)

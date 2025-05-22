@@ -60,6 +60,8 @@ public class ActiveRagdollController : MonoBehaviour
 
 	public Transform rightTarget;
 
+	public BodyController bodyController;
+
 	public Rigidbody rb;
 
 	public float headStabilizerForce;
@@ -97,6 +99,7 @@ public class ActiveRagdollController : MonoBehaviour
 		//previousRotation = proceduralAnimation.pivot.transform.rotation.x;
 
 		//setUp();
+		bodyController = GetComponentInParent<BodyController>();
 	}
 
 	// Update is called once per frame

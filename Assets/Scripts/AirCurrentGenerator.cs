@@ -45,11 +45,12 @@ public class AirCurrentGenerator : MonoBehaviour
 		}
 	}
 
-	private void Update()
+	private void FixedUpdate()
 	{
 		if (isOn)
 		{
 			coolingZoneObject.SetActive(true);
+			RaycastCoolingCheck();
 			DoFanBladeAnimation();
 		}
 		else
@@ -61,6 +62,57 @@ public class AirCurrentGenerator : MonoBehaviour
 		// {
 		// 	isCoolingSomething = true;
 		// }
+	}
+
+	private void RaycastCoolingCheck()
+	{
+		if (!isOn) return;
+
+		Vector3 origin = fanBlades.transform.position;
+		Vector3 direction = fanBlades.transform.up;
+
+		RaycastHit hit;
+		if (Physics.SphereCast(origin, coolingZoneRadius, direction, out hit, maxCoolingDistance, heatContainerLayerMask))
+		{
+			GameObject hitObject = hit.collider.gameObject;
+			HeatContainer hitContainer = hitObject.GetComponent<HeatContainer>();
+
+			if (hitContainer != null)
+			{
+				// If we're hitting a new container
+				if (hitContainer != currentHeatContainer)
+				{
+					// Reset the previous one
+					if (currentHeatContainer != null)
+					{
+						ResetDissipationRate();
+					}
+
+					// Set the new one and apply cooling
+					currentHeatContainer = hitContainer;
+					originalDissipationRate = currentHeatContainer.dissipationRateFromAirCurrents;
+					ApplyCoolingEffect(currentHeatContainer);
+					//Debug.Log("cooling " + hitObject.name);
+				}
+				// else: we're still hitting the same one, do nothing
+			}
+			else
+			{
+				// Ray hit something without a HeatContainer — stop cooling
+				if (currentHeatContainer != null)
+				{
+					ResetDissipationRate();
+				}
+			}
+		}
+		else
+		{
+			// Ray didn't hit anything — stop cooling
+			if (currentHeatContainer != null)
+			{
+				ResetDissipationRate();
+			}
+		}
 	}
 
 	private void DoFanBladeAnimation()
@@ -137,7 +189,7 @@ public class AirCurrentGenerator : MonoBehaviour
 		Vector3 directionToContainer = (currentHeatContainer.transform.position - fanBlades.transform.position).normalized;
 
 		// Perform the raycast (using the obstructionLayerMask to detect only certain objects)
-		if (Physics.Raycast(fanBlades.transform.position, directionToContainer, out hit, maxCoolingDistance, obstructionLayerMask | heatContainerLayerMask))
+		if (Physics.Raycast(fanBlades.transform.position, directionToContainer, out hit, maxCoolingDistance))
 		{
 			// Check if the object hit is NOT the HeatContainer, indicating an obstruction
 			if (hit.collider.gameObject != currentHeatContainer.gameObject)
@@ -171,6 +223,7 @@ public class AirCurrentGenerator : MonoBehaviour
 		if (currentHeatContainer != null)
 		{
 			currentHeatContainer.dissipationRateFromAirCurrents = originalDissipationRate;
+			currentHeatContainer = null;
 		}
 	}
 

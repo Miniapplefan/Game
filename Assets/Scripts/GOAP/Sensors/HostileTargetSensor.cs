@@ -25,6 +25,11 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 
 	public override ITarget Sense(IMonoAgent agent, IComponentReference references)
 	{
+		if (agent.GetComponentInChildren<BodyState>().legs.getMoveSpeed() <= 0)
+		{
+			return new PositionTarget(agent.transform.position);
+		}
+
 		//string s = "";
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
@@ -45,14 +50,14 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 				}
 			}
 
-			if (seeTarget && distanceToPlayer <= inRangeDistance / 2)
+			if (seeTarget && distanceToPlayer <= inRangeDistance / 1.5f)
 			{
-				Debug.Log("Can already see player and in range, staying put " + inRangeDistance);
+				//Debug.Log("Can already see player and in range, staying put " + inRangeDistance);
 				return new PositionTarget(agent.transform.position);
 			}
-			else if (seeTarget && !(distanceToPlayer <= inRangeDistance / 2))
+			else if (seeTarget && !(distanceToPlayer <= inRangeDistance / 1.5f))
 			{
-				Debug.Log("Can already see player and NOT in range " + inRangeDistance);
+				//Debug.Log("Can already see player and NOT in range " + inRangeDistance);
 				int count = 0;
 
 				//We do not see the player from our position
@@ -75,7 +80,7 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 			}
 			else if (!seeTarget && distanceToPlayer <= inRangeDistance / 2)
 			{
-				Debug.Log("Do not see player and in range " + inRangeDistance);
+				//Debug.Log("Do not see player and in range " + inRangeDistance);
 
 				List<Vector3> points = new List<Vector3>();
 				float lineLength = 20f; // Length of the strafing line
@@ -113,7 +118,7 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 				{
 					return new PositionTarget(closestPoint);
 				}
-				Debug.Log("no point found");
+				//Debug.Log("no point found");
 				return new PositionTarget(Colliders[0].transform.position);
 			}
 
@@ -193,7 +198,7 @@ public class HostileTargetSensor : LocalTargetSensorBase, IInjectable
 		//     return null;
 		//   }
 		// }
-		Debug.Log("Advancing ");
+		//Debug.Log("Advancing ");
 		return new PositionTarget(Colliders[0].transform.position);
 	}
 

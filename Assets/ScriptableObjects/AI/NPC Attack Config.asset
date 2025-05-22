@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SensorRadius: 600
   FOVAngle: 90
-  LineOfSightSphereCastRadius: 0.3
+  LineOfSightSphereCastRadius: 0.2
   AttackableLayerMask:
     serializedVersion: 2
     m_Bits: 256

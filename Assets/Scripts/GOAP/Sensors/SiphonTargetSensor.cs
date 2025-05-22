@@ -30,7 +30,7 @@ public class SiphonTargetSensor : LocalTargetSensorBase, IInjectable
 	{
 		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, TargetCollider, AttackConfig.SiphonableLayerMask) > 0)
 		{
-
+			agent.GetComponentInChildren<BodyState>().siphonTarget = TargetCollider[0].GetComponent<SiphonTarget>();
 			return TargetCollider[0].transform.position;
 		}
 		else

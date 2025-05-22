@@ -31,6 +31,16 @@ public class MarchingCubesGenerator : MonoBehaviour
 		GenerateScalarField();
 		MarchCubes();
 		SetMesh();
+
+		Mesh mesh = GetComponent<MeshFilter>().mesh;
+		Vector3[] verts = mesh.vertices;
+		Vector2[] uvs = new Vector2[verts.Length];
+
+		for (int i = 0; i < uvs.Length; i++)
+		{
+			uvs[i] = new Vector2(vertices[i].x, vertices[i].z);
+		}
+		mesh.uv = uvs;
 	}
 
 	private void GenerateVertexMatrix()

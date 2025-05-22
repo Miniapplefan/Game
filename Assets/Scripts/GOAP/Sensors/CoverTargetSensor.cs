@@ -158,8 +158,8 @@ public class CoverTargetSensor : LocalTargetSensorBase, IInjectable
 						//Debug.Log("checking points");
 						float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
 						float distanceToAI = Vector3.Distance(point, agent.transform.position);
-
-						if (distanceToAI < distanceToPlayer && !HasLineOfSight(point, Colliders[0].transform.position))
+//distanceToAI < distanceToPlayer && 
+						if (!HasLineOfSight(point, Colliders[0].transform.position))
 						{
 							//Debug.Log("point within range and has los");
 							if (distanceToAI < closestDistance)

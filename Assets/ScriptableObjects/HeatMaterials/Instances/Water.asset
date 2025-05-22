@@ -16,4 +16,8 @@ MonoBehaviour:
   specificHeatCapacity: 4184
   mass: 1000
   fluidInteractionConstant: 10
-  thermalConductivity: 100000
+  thermalConductivity: 1000000
+  ignitionTemperature: 1e+9
+  fuelBurnRate: 0.001
+  burnTemperatureMultiplier: 2
+  radiationConstant: 0.5

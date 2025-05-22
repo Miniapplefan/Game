@@ -156,12 +156,12 @@ public class CoolingModel : SystemModel
 	public bool isOverheated = false; // Track whether the mech is overheated
 	public bool isStandingStill = false; // To track if the mech is standing still
 
-	public float minimumTemperature = 0.1f;
+	public float minimumTemperature = 21f;
 
-	private float maxHeatMultiplier = 10f;
+	private float maxHeatMultiplier = 260f;
 	private float passiveCoolingMultiplier = 0.0f;
-	private float coolingMultiplier = 40f;
-	private float overheatingCoolingMultiplier = 4000f;
+	private float coolingMultiplier = 30f;
+	private float overheatingCoolingMultiplier = 70000f;
 
 	public enum CoolingState { PassiveCooldown, Cooldown, CooldownOverheated }
 	public CoolingState currentCoolingState;

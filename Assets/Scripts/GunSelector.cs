@@ -21,13 +21,15 @@ public class GunSelector : MonoBehaviour
 	private List<GunDataScriptableObject> Guns;
 	[SerializeField]
 	private Rigidbody weapon;
+	private LineRenderer laser;
+	private Vector3 raycastPoint;
 
 	[Space]
 	[Header("Runtime Filled")]
 	public Gun ActiveGun1;
 	public Gun ActiveGun2;
 	public Gun ActiveGun3;
-
+	bool isAI;
 	public LayerMask raycastLayerMask;
 	private float lastRaycastTime;
 	private float raycastInterval = 0.5f; // Adjust this value as needed
@@ -40,6 +42,8 @@ public class GunSelector : MonoBehaviour
 		ActiveGun2 = CreateGun(Gun2, Gun2Parent);
 		ActiveGun3 = CreateGun(Gun3, Gun3Parent);
 		Debug.Log("created guns");
+		laser = GetComponent<LineRenderer>();
+		isAI = GetComponentInParent<AIController>() != null ? true : false;
 	}
 
 	void Update()
@@ -51,11 +55,21 @@ public class GunSelector : MonoBehaviour
 		}
 	}
 
+	void FixedUpdate()
+	{
+		float dist = Vector3.Distance(transform.position, raycastPoint);
+		if (!isAI)
+		{
+			DrawLaser(transform.position + transform.forward * dist / 1.5f, transform.position + transform.forward * dist);
+		}
+	}
+
 	void PerformRaycast()
 	{
 		RaycastHit hit;
 		if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity, raycastLayerMask))
 		{
+			raycastPoint = hit.point;
 			// Rotate the guns to look at the hit point
 			RotateGuns(hit.point);
 		}
@@ -73,6 +87,15 @@ public class GunSelector : MonoBehaviour
 			Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
 			gun.rotation = targetRotation;
 		}
+	}
+
+	private void DrawLaser(Vector3 startPosition, Vector3 endPosition)
+	{
+		float dist = Vector3.Distance(transform.position, endPosition);
+		laser.startWidth = dist / 200;
+		laser.endWidth = dist / 200;
+		laser.SetPosition(0, startPosition);
+		laser.SetPosition(1, endPosition);
 	}
 
 	private Gun CreateGun(GunType type, GameObject slot)
