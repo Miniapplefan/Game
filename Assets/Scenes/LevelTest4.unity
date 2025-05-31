@@ -449,6 +449,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &83937296
@@ -472,6 +473,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -564,6 +567,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &140414155
@@ -586,7 +590,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -850,7 +856,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7415094684483460291, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
       propertyPath: currentTemperature
-      value: 21
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 7715669759740144996, guid: 7e3ac48f9eb274ea0b26f290aa019e7e, type: 3}
       propertyPath: BloodParticles
@@ -919,6 +925,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &150671040
@@ -941,7 +948,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -1186,6 +1195,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &166621075
@@ -1209,6 +1219,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -1315,6 +1327,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &211610700
@@ -1337,7 +1350,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -1500,6 +1515,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &223108829
@@ -1523,6 +1539,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -1572,6 +1590,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &223424232
@@ -1595,6 +1614,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -1655,6 +1676,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &229497356
@@ -1677,7 +1699,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -2048,6 +2072,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &298451189
@@ -2070,7 +2095,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -2229,6 +2256,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &334713402
@@ -2251,7 +2279,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -2619,6 +2649,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &404717928
@@ -2641,7 +2672,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -2884,6 +2917,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &425546752
@@ -2906,7 +2940,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -3099,6 +3135,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &434793629
@@ -3121,7 +3158,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -3269,6 +3308,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &435381448
@@ -3292,6 +3332,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -3497,6 +3539,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &500561764
@@ -3520,6 +3563,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -3569,6 +3614,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &504763513
@@ -3592,6 +3638,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -3731,6 +3779,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &540252711
@@ -3754,6 +3803,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -3829,6 +3880,10 @@ PrefabInstance:
     - target: {fileID: 4734273263559938036, guid: 1959b4241d0ff4ba98f703ea9fb8613d, type: 3}
       propertyPath: m_Layer
       value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 4734273263559938036, guid: 1959b4241d0ff4ba98f703ea9fb8613d, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6481432851377489377, guid: 1959b4241d0ff4ba98f703ea9fb8613d, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -3984,6 +4039,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &605390194
@@ -4006,7 +4062,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -4096,6 +4154,111 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3352883202835442529, guid: 1e6718bf8d7134189a29bc45e124181b, type: 3}
   m_PrefabInstance: {fileID: 1112605948}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &725956228
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 725956232}
+  - component: {fileID: 725956231}
+  - component: {fileID: 725956230}
+  - component: {fileID: 725956229}
+  m_Layer: 9
+  m_Name: debugPos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &725956229
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 725956228}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &725956230
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 725956228}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &725956231
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 725956228}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &725956232
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 725956228}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &755190801 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6443633733971982340, guid: 3e08bd60100a44600a9fcea8a56d933e, type: 3}
@@ -4180,6 +4343,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &765399558
@@ -4202,7 +4366,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -4361,6 +4527,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &787619185
@@ -4383,7 +4550,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -4504,6 +4673,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &791054114
@@ -4527,6 +4697,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -4614,6 +4786,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &816800018
@@ -4636,7 +4809,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -4757,6 +4932,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &831656057
@@ -4780,6 +4956,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -4840,6 +5018,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &834022868
@@ -4862,7 +5041,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -5100,6 +5281,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &860504060
@@ -5123,6 +5305,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -5267,6 +5451,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &891982304
@@ -5290,6 +5475,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -5704,6 +5891,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &941211034
@@ -5726,7 +5914,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -6021,6 +6211,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1004753117
@@ -6043,7 +6234,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -6169,6 +6362,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1018310571
@@ -6192,6 +6386,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -6290,6 +6486,59 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1443506575}
   m_SourcePrefab: {fileID: 100100000, guid: 1959b4241d0ff4ba98f703ea9fb8613d, type: 3}
+--- !u!1 &1034573559
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1034573561}
+  - component: {fileID: 1034573560}
+  m_Layer: 9
+  m_Name: AirGrid
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1034573560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034573559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5e53607126484fdbabe3d149a2cabef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  airCollider: {fileID: 1801059730}
+  drawDebug: 1
+  debugPos: {fileID: 0}
+  startingTemp: 21
+  cubesToProcessPerFrame: 50
+  diffusionRate: 0.05
+  diffusionThreshold: 0.1
+  heatMaterial: {fileID: 11400000, guid: 64ccfbafefafb4152b04fa592599a1e3, type: 2}
+  structuralHeatMaterial: {fileID: 11400000, guid: 87bb80ba0ae964f0ebd61dc314bf9065, type: 2}
+--- !u!4 &1034573561
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034573559}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1046111996 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4437857915356160113, guid: a00fd1f08c3ac4068988dc0c12696d5e, type: 3}
@@ -6336,6 +6585,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1055236608
@@ -6359,6 +6609,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -6419,6 +6671,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1065520740
@@ -6441,7 +6694,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -6833,6 +7088,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1161012783
@@ -6855,7 +7111,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -7003,6 +7261,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1213227400
@@ -7026,6 +7285,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -7436,6 +7697,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1326544731
@@ -7459,6 +7721,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -7655,6 +7919,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1380256256
@@ -7678,6 +7943,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -7817,6 +8084,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1397049363
@@ -7840,6 +8108,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -7988,6 +8258,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1429996077
@@ -8010,7 +8281,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -8131,6 +8404,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1443506577
@@ -8154,6 +8428,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -8302,6 +8578,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1490095523
@@ -8324,7 +8601,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -8524,6 +8803,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1518184746
@@ -8546,7 +8826,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -8816,6 +9098,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1553758828
@@ -8838,7 +9121,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -9024,6 +9309,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1557629291
@@ -9046,7 +9332,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -9295,6 +9583,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1614950261
@@ -9317,7 +9606,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -17938,6 +18229,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1691788429
@@ -17961,6 +18253,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -18048,6 +18342,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1718855895
@@ -18070,7 +18365,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -18169,7 +18466,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1801059729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18191,6 +18488,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 11400000, guid: 87bb80ba0ae964f0ebd61dc314bf9065, type: 2}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 0
@@ -18279,8 +18578,8 @@ Transform:
   m_GameObject: {fileID: 1801059728}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 14.4, y: 1.97, z: 14.7}
-  m_LocalScale: {x: 28, y: 6, z: 28}
+  m_LocalPosition: {x: 15, y: 2, z: 15}
+  m_LocalScale: {x: 26, y: 5, z: 27}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -18337,6 +18636,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1805632175
@@ -18359,7 +18659,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -18871,6 +19173,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1876750797
@@ -18893,7 +19196,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -19041,6 +19346,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1880269688
@@ -19064,6 +19370,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -19245,6 +19553,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &1998929397
@@ -19268,6 +19577,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -19398,6 +19709,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &2022781600
@@ -19421,6 +19733,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -19542,6 +19856,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &2051265602
@@ -19564,7 +19879,9 @@ MonoBehaviour:
   mass: 1
   fluidInteractionConstant: 0
   thermalConductivity: 0
-  currentAir: {fileID: 1801059729}
+  currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 0
   dissipationRateFromAirCurrents: 1
@@ -20154,6 +20471,7 @@ MonoBehaviour:
   heatContainer: {fileID: 0}
   isOnFire: 0
   fuel: 0
+  volume: 0
   targetsForFlaming: []
   onFireMaterial: {fileID: 2100000, guid: d15897a066fc1bd4e873db20d70da822, type: 2}
 --- !u!114 &2144590355
@@ -20177,6 +20495,8 @@ MonoBehaviour:
   fluidInteractionConstant: 0
   thermalConductivity: 0
   currentAir: {fileID: 0}
+  airGrid: {fileID: 0}
+  isBeingFlamed: 0
   structuralMaterial: {fileID: 0}
   ambientTemperature: 70
   dissipationRateFromAirCurrents: 1
@@ -20272,6 +20592,8 @@ SceneRoots:
   m_Roots:
   - {fileID: 147957861}
   - {fileID: 397584973}
+  - {fileID: 725956232}
+  - {fileID: 1034573561}
   - {fileID: 1801059733}
   - {fileID: 1845173713}
   - {fileID: 1553175728}

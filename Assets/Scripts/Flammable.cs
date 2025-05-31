@@ -161,6 +161,7 @@ public class Flammable : MonoBehaviour
             {
                 target.IncreaseHeat(this, heatContainer.currentTemperature * heatContainer.mass);
             }
+
         }
     }
 
@@ -193,9 +194,9 @@ public class Flammable : MonoBehaviour
            3.  Determine how much heat we lose to the air and compensate for that
         -----------------------------------------------------------------*/
 
-        float temperatureDifference = heatContainer.currentTemperature - heatContainer.currentAir.currentTemperature;
-        float heatTransfer = heatContainer.GetCoolingConstant(heatContainer.currentAir) * Mathf.Abs(temperatureDifference);
-        float tempChange = heatTransfer / (heatContainer.mass * heatContainer.specificHeatCapacity);
+        float temperatureDifference = heatContainer.currentTemperature - heatContainer.ambientTemperature;
+        float heatTransfer = heatContainer.GetCoolingConstant(heatContainer.heatMat) * Mathf.Abs(temperatureDifference);
+        float tempChange = heatTransfer / (heatContainer.mass * heatContainer.specificHeatCapacity) * 6;
 
         float powerPerSecond = basePower * tempChange * boostFactor;
 
@@ -215,7 +216,7 @@ public class Flammable : MonoBehaviour
         else
         {
             heatContainer.shouldApplyRadiativeHeating = false;
-            if (heatContainer.heatBubble != null) heatContainer.heatBubble.RemoveContributer(heatContainer, true);
+            //if (heatContainer.heatBubble != null) heatContainer.heatBubble.RemoveContributer(heatContainer, true);
             flameZone.SetActive(false);
             isOnFire = false;
         }

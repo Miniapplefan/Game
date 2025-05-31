@@ -160,7 +160,7 @@ public class CoolingModel : SystemModel
 
 	private float maxHeatMultiplier = 260f;
 	private float passiveCoolingMultiplier = 0.0f;
-	private float coolingMultiplier = 30f;
+	private float coolingMultiplier = 300f;
 	private float overheatingCoolingMultiplier = 70000f;
 
 	public enum CoolingState { PassiveCooldown, Cooldown, CooldownOverheated }

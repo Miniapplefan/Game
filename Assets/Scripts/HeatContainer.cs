@@ -19,9 +19,12 @@ public class HeatContainer : MonoBehaviour
 	public float fluidInteractionConstant;
 	public float thermalConductivity;
 	public HeatContainer currentAir;
+	public AirGrid airGrid;
+	Collider heatCollider;
+	//HeatContainer me;
 	public bool isBeingFlamed;
 	public HeatMaterialScriptableObject structuralMaterial;
-	public float ambientTemperature = 70f; // Ambient temp for dissipation
+	public float ambientTemperature = 21f; // Ambient temp for dissipation
 	public float dissipationRateFromAirCurrents = 1f; // Dissipation rate from air currents 
 	public float dissipationRate = 1.0f; // Dissipation rate (passive or for heat transfer)
 	public CoolingModel coolingModel; // Cooling model for mechs
@@ -41,6 +44,7 @@ public class HeatContainer : MonoBehaviour
 		{
 			return;
 		}
+		heatCollider = GetComponent<Collider>();
 
 		InitFromHeatMaterialSO();
 		// If a mech with a cooling model, initialize
@@ -98,8 +102,8 @@ public class HeatContainer : MonoBehaviour
 				transferTargets.Add(otherHeatContainer);
 				if (otherHeatContainer.containerType == ContainerType.Air)
 				{
-					currentAir = otherHeatContainer;
-					ambientTemperature = currentAir.currentTemperature;
+					// currentAir = otherHeatContainer;
+					// ambientTemperature = currentAir.currentTemperature;
 				}
 				// if (containerType == ContainerType.Water)
 				// {
@@ -107,7 +111,12 @@ public class HeatContainer : MonoBehaviour
 				// }
 			}
 		}
-		StartCoroutine("CheckForHeatBubble");
+		airGrid = GameObject.Find("AirGrid").GetComponent<AirGrid>();
+
+		// if (isFlammable)
+		// {
+		// 	StartCoroutine("CheckForHeatBubble");
+		// }
 	}
 
 	// Calculate max heat capacity based on volume of collider (optional for different container types)
@@ -115,10 +124,9 @@ public class HeatContainer : MonoBehaviour
 	{
 		if (containerType == ContainerType.Structural)
 		{
-			return currentAir.GetColliderVolume(currentAir.GetComponent<BoxCollider>()) * heatMat.mass;
+			return 0;
+			// return currentAir.GetColliderVolume(currentAir.GetComponent<BoxCollider>()) * heatMat.mass;
 		}
-
-		Collider heatCollider = GetComponent<Collider>();
 
 		float volume = GetColliderVolume(heatCollider);
 		return volume * heatMat.mass; // Adjust scale for heat capacity
@@ -146,6 +154,8 @@ public class HeatContainer : MonoBehaviour
 			//Debug.Log(gameObject.name + " transferring heat to " + target.gameObject.name);
 			TransferHeat(target);
 		}
+
+		TransferHeatToAir();
 		// Always transfer heat if there are targets
 		// if (coolingModel != null)
 		// {
@@ -279,18 +289,39 @@ public class HeatContainer : MonoBehaviour
 	// Handles multi-way heat transfer
 	public void TransferHeat(HeatContainer otherContainer)
 	{
-		if (containerType == ContainerType.Air || otherContainer.containerType == ContainerType.Air)
-		{
-			//Debug.Log(gameObject.name + " is transferring to " + otherContainer.gameObject.name);
+		/*
+			if (containerType == ContainerType.Air || otherContainer.containerType == ContainerType.Air)
+			{
+				//Debug.Log(gameObject.name + " is transferring to " + otherContainer.gameObject.name);
 
-			// Use Newton's Law of Cooling for the air
-			ApplyNewtonsLawOfCooling(otherContainer);
-		}
-		else
+				// Use Newton's Law of Cooling for the air
+				ApplyNewtonsLawOfCooling(otherContainer);
+			}
+			else
+			{
+				// Use the conduction model for heat transfer between mechs and water
+				ApplyConductionModel(otherContainer);
+			}
+			*/
+
+		if (containerType == ContainerType.Water)
 		{
-			// Use the conduction model for heat transfer between mechs and water
 			ApplyConductionModel(otherContainer);
 		}
+	}
+
+	void TransferHeatToAir()
+	{
+		List<Vector3Int> cubes = airGrid.GetCollidingAirCubes(heatCollider);
+		float totalTemp = 0;
+
+		foreach (var item in cubes)
+		{
+			airGrid.ApplyNewtonsLawOfCooling(this, cubes.Count, item.x, item.y, item.z);
+			totalTemp += airGrid.GetTemperature(item.x, item.y, item.z);
+		}
+
+		ambientTemperature = totalTemp / cubes.Count;
 	}
 
 	private void ApplyNewtonsLawOfCooling(HeatContainer otherContainer)
@@ -316,7 +347,7 @@ public class HeatContainer : MonoBehaviour
 				//temperatureDifference = bodyTemperature - Mathf.Min(airTemperature, minTemperature); // Allow cooling down to minTemperature
 
 				// Apply Newton's law: heatTransfer = coolingConstant * (temp difference) * dissipationRate * Time.deltaTime
-				float heatTransfer = GetCoolingConstant(airContainer) * (dissipationRate) * Time.deltaTime;
+				float heatTransfer = GetCoolingConstant(airContainer.heatMat) * (dissipationRate) * Time.deltaTime;
 
 				// Calculate the temperature change for the body and air based on their specific heat capacity and mass
 				float bodyTempChange = heatTransfer / (bodyContainer.mass * bodyContainer.specificHeatCapacity);
@@ -340,7 +371,7 @@ public class HeatContainer : MonoBehaviour
 				{
 					// Determine which way the heat flows
 					//dissipationRateFromAirCurrents
-					float heatTransfer = GetCoolingConstant(airContainer) * dissipationRateFromAirCurrents * Mathf.Abs(temperatureDifference) * Time.deltaTime;
+					float heatTransfer = GetCoolingConstant(airContainer.heatMat) * dissipationRateFromAirCurrents * Mathf.Abs(temperatureDifference) * Time.deltaTime;
 
 					//					Debug.Log(heatTransfer);
 
@@ -390,10 +421,10 @@ public class HeatContainer : MonoBehaviour
 		}
 	}
 
-	public float GetCoolingConstant(HeatContainer fluidContainer)
+	public float GetCoolingConstant(HeatMaterialScriptableObject fluidMaterial)
 	{
 		// Determine which fluid/material interaction is happening
-		float interactionConstant = fluidContainer.fluidInteractionConstant;
+		float interactionConstant = fluidMaterial.fluidInteractionConstant;
 
 		// Calculate coolingConstant based on thermal conductivity and interaction
 		return interactionConstant * Mathf.Sqrt(thermalConductivity);

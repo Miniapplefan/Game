@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Mech
   m_EditorClassIdentifier: 
   containerType: 3
-  specificHeatCapacity: 8000
+  specificHeatCapacity: 5000
   mass: 100
   fluidInteractionConstant: 10
   thermalConductivity: 100

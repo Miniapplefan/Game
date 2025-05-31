@@ -17,7 +17,7 @@ MonoBehaviour:
   mass: 1000
   fluidInteractionConstant: 10
   thermalConductivity: 1000000
-  ignitionTemperature: 1e+9
+  ignitionTemperature: 100
   fuelBurnRate: 0.001
-  burnTemperatureMultiplier: 2
+  burnTemperatureMultiplier: 1
   radiationConstant: 0.5
