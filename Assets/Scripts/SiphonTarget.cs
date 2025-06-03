@@ -8,7 +8,7 @@ public class SiphonTarget : MonoBehaviour
 	public float dollarAmount = 100;
 	public float dollarsLeft = 1;
 	public SiphonModel siphoner;
-
+	public GameObject siphonerGameObject;
 	public GameObject dollarsLeftIndicator;
 	public LineRenderer siphonerLine;
 
@@ -53,6 +53,8 @@ public class SiphonTarget : MonoBehaviour
 		siphonModel.extended = true;
 		siphonModel.siphonTarget = this;
 		siphoner = siphonModel;
+
+		siphonerGameObject = siphoner.arm.gameObject;
 	}
 
 	public void notBeingSiphoned(SiphonModel siphonModel)
@@ -68,6 +70,9 @@ public class SiphonTarget : MonoBehaviour
 
 		siphonModel.extended = false;
 		siphonModel.siphonTarget = null;
+
+		siphonerGameObject = null;
+
 		siphoner = null;
 	}
 

@@ -323,7 +323,7 @@ public class OverheatHostileAction : ActionBase<AttackData>, IInjectable
 
 	private List<GunConsideration> rankGunToUse(AttackData data, IMonoAgent agent)
 	{
-		if (data.targetState.Legs_getTaggingHealth() / 100 > 0.5 && (!IsLimbObstructed(LimbToPosition(LimbToTarget.RightLeg, data), agent) || (!IsLimbObstructed(LimbToPosition(LimbToTarget.LeftLeg, data), agent))))
+		if (data.targetState.Legs_getTaggingHealth() / 100 > 0.5 && data.targetState.heatContainer.currentTemperature / data.targetState.cooling.GetMaxHeat() > 0.4f && (!IsLimbObstructed(LimbToPosition(LimbToTarget.RightLeg, data), agent) || (!IsLimbObstructed(LimbToPosition(LimbToTarget.LeftLeg, data), agent))))
 		{
 			List<GunConsideration> sortedGunConsiderations = gunConsideration
 				.OrderByDescending(lc => lc.gun.gunData.shootConfig.impactForce * gunRankRangeConsideration(data, agent, lc.gun))

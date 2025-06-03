@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AI;
@@ -63,7 +64,8 @@ public class BodyController : MonoBehaviour
 	private Vector3 agentDestination;
 	private float minKnockbackDuration = 0.000001f;
 
-	public float repairDelay = 50f;
+	// used to be 50f
+	public float repairDelay = 10f;
 	public Dictionary<RepairTarget, float> damagedLimbs = new Dictionary<RepairTarget, float>();
 	private List<RepairTarget> toRepair = new List<RepairTarget>();
 
@@ -286,28 +288,39 @@ public class BodyController : MonoBehaviour
 
 	public void doLimbRepairs()
 	{
-		if (legs.leftLegHealth < legs.currentLevelWithoutDamage)
-		{
-			RepairTarget target;
-			target = new RepairTarget(legs, LimbID.leftLeg);
-			if (!damagedLimbs.ContainsKey(target))
-			{
-				damagedLimbs.Add(target, Time.time + repairDelay);
-			}
-		}
+		// if (legs.leftLegHealth < legs.currentLevelWithoutDamage)
+		// {
+		// 	RepairTarget target;
+		// 	target = new RepairTarget(legs, LimbID.leftLeg);
+		// 	if (!damagedLimbs.ContainsKey(target))
+		// 	{
+		// 		damagedLimbs.Add(target, Time.time + repairDelay);
+		// 		Debug.Log("add lleg repair");
+		// 	}
+		// 	else
+		// 	{
+		// 		Debug.Log(damagedLimbs[target] + " || " + Time.time);
+		// 	}
+		// }
 
-		if (legs.rightLegHealth < legs.currentLevelWithoutDamage)
-		{
-			RepairTarget target;
-			target = new RepairTarget(legs, LimbID.rightLeg);
-			if (!damagedLimbs.ContainsKey(target))
-			{
-				damagedLimbs.Add(target, Time.time + repairDelay);
-			}
-		}
+		// if (legs.rightLegHealth < legs.currentLevelWithoutDamage)
+		// {
+		// 	RepairTarget target;
+		// 	target = new RepairTarget(legs, LimbID.rightLeg);
+		// 	if (!damagedLimbs.ContainsKey(target))
+		// 	{
+		// 		damagedLimbs.Add(target, Time.time + repairDelay);
+		// 		Debug.Log("add rleg repair");
+		// 	}
+		// 	else
+		// 	{
+		// 		Debug.Log(damagedLimbs[target] + " || " + Time.time);
+		// 	}
+		// }
 
 		foreach (var entry in damagedLimbs)
 		{
+			// Debug.Log(entry.Key.specificLimb + " : " + entry.Value + "-||-" + Time.time);
 			SystemModel limb = entry.Key.system;
 			float repairTime = entry.Value;
 
@@ -324,18 +337,28 @@ public class BodyController : MonoBehaviour
 					{
 						case LimbID.leftLeg:
 							legs.healLeftLeg(1);
+							if ((entry.Key.specificLimb == LimbID.leftLeg && legs.leftLegHealth == limb.currentLevelWithoutDamage))
+							{
+								toRepair.Add(entry.Key);
+								// Debug.Log("lleg done");
+							}
 							break;
 						case LimbID.rightLeg:
 							legs.healRightLeg(1);
+							if ((entry.Key.specificLimb == LimbID.rightLeg && legs.rightLegHealth == limb.currentLevelWithoutDamage))
+							{
+								toRepair.Add(entry.Key);
+								// Debug.Log("rleg done");
+							}
 							break;
 						case LimbID.head:
 							// head.Repair(1);
 							break;
 					}
 				}
-				if ((limb.currentLevelWithoutDamage == limb.currentLevel && entry.Key.system != legs) || (entry.Key.specificLimb == LimbID.leftLeg && legs.leftLegHealth == limb.currentLevelWithoutDamage) || (entry.Key.specificLimb == LimbID.rightLeg && legs.rightLegHealth == limb.currentLevelWithoutDamage))
+				if (limb.currentLevelWithoutDamage == limb.currentLevel && entry.Key.system != legs)
 				{
-					//Debug.Log("Repaired " + limb.name);
+					Debug.Log("Repaired " + limb.name);
 					toRepair.Add(entry.Key);
 
 					// string dict = "[";
@@ -352,24 +375,32 @@ public class BodyController : MonoBehaviour
 				//Debug.Log("Time current: " + Time.time + " Time of repair: " + repairTime);
 			}
 		}
-		var dlen = toRepair.ToArray().Length;
+		// var dlen = toRepair.ToArray().Length;
 		// Remove fully repaired limbs
 		foreach (RepairTarget limb in toRepair)
 		{
+			// Debug.Log(limb.specificLimb + " was fully repaired");
 			damagedLimbs.Remove(limb);
 		}
-		var dlenafter = toRepair.ToArray().Length;
+		toRepair.Clear();
 
-		if (dlen > dlenafter)
-		{
-			string dict = "[";
-			foreach (RepairTarget limb in toRepair)
-			{
-				dict += limb.system + ", " + limb.specificLimb + " | ";
-			}
-			dict += "]";
-			Debug.Log(dict);
-		}
+		// foreach (var entry in damagedLimbs)
+		// {
+		// 	Debug.Log(entry.Key.specificLimb + " : " + entry.Value + "-||-" + Time.time);
+		// }
+
+		// var dlenafter = toRepair.ToArray().Length;
+
+		// if (dlen > dlenafter)
+		// {
+		// 	string dict = "[";
+		// 	foreach (RepairTarget limb in toRepair)
+		// 	{
+		// 		dict += limb.system + ", " + limb.specificLimb + " | ";
+		// 	}
+		// 	dict += "]";
+		// 	Debug.Log(dict);
+		// }
 	}
 
 	public void Die()

@@ -45,7 +45,7 @@ public class CooldownTargetSensor : LocalTargetSensorBase, IInjectable
 	private Vector3 GetEnvironmentalCoolingPosition(IMonoAgent agent)
 	{
 		bool targetNearby = false;
-		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
+		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius * 2, Colliders, AttackConfig.AttackableLayerMask) > 0)
 		{
 			targetNearby = true;
 		}

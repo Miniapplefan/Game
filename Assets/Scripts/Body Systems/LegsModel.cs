@@ -198,12 +198,12 @@ public class LegsModel : SystemModel
 
 	public void healLeftLeg(int amount)
 	{
-		leftLegHealth = Mathf.Clamp(leftLegHealth + amount, leftLegHealth, currentLevel);
+		leftLegHealth = Mathf.Clamp(leftLegHealth + amount, leftLegHealth, currentLevelWithoutDamage);
 	}
 
 	public void healRightLeg(int amount)
 	{
-		rightLegHealth = Mathf.Clamp(rightLegHealth + amount, rightLegHealth, currentLevel);
+		rightLegHealth = Mathf.Clamp(rightLegHealth + amount, rightLegHealth, currentLevelWithoutDamage);
 	}
 
 	public bool isCurrentVelocityLessThanMax()

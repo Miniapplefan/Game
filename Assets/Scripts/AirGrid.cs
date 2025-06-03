@@ -1,9 +1,98 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics; // For float3, int3
+using Unity.Burst;
+
 
 public class AirGrid : MonoBehaviour
 {
+    [BurstCompile]
+    public struct DiffusionJob : IJobParallelFor
+    {
+        [ReadOnly] public NativeArray<float> currentTemperatureGrid; // Input - The current temperature data
+        public NativeArray<float> nextTemperatureGrid; // Output - The calculated next temperature data
+        [ReadOnly] public int3 gridDimensions;
+        [ReadOnly] public float diffusionRate;
+        [ReadOnly] public float diffusionThreshold;
+        [ReadOnly] public NativeArray<float> structuralTemperature;
+        [ReadOnly] public float structuralSpecificHeat;
+        [ReadOnly] public float airSpecificHeat;
+        [ReadOnly] public float deltaTime;
+
+        public void Execute(int index)
+        {
+            int x = index % gridDimensions.x;
+            int y = (index / gridDimensions.x) % gridDimensions.y;
+            int z = index / (gridDimensions.x * gridDimensions.y);
+
+            float currentTemp = currentTemperatureGrid[index]; // Read from input
+            float newTemperature = currentTemp;
+
+            int3 currentPos = new int3(x, y, z);
+            int[] dx = { 1, -1, 0, 0, 0, 0 };
+            int[] dy = { 0, 0, 1, -1, 0, 0 };
+            int[] dz = { 0, 0, 0, 0, 1, -1 };
+
+            for (int i = 0; i < 6; i++)
+            {
+                int3 neighborPos = currentPos + new int3(dx[i], dy[i], dz[i]);
+
+                if (neighborPos.x >= 0 && neighborPos.x < gridDimensions.x &&
+                    neighborPos.y >= 0 && neighborPos.y < gridDimensions.y &&
+                    neighborPos.z >= 0 && neighborPos.z < gridDimensions.z)
+                {
+                    int neighborIndex = neighborPos.x + gridDimensions.x * (neighborPos.y + gridDimensions.y * neighborPos.z);
+                    float neighborTemp = currentTemperatureGrid[neighborIndex]; // Read from input
+                    float tempDifference = math.abs(currentTemp - neighborTemp);
+
+                    if (tempDifference > diffusionThreshold)
+                    {
+                        float heatTransfer = diffusionRate * tempDifference * deltaTime;
+                        float energyTransfer = heatTransfer * airSpecificHeat;
+
+                        // Apply changes to the 'newTemperature' for the current cell
+                        if (currentTemp > neighborTemp)
+                        {
+                            newTemperature -= energyTransfer * 0.5f / airSpecificHeat;
+                        }
+                        else
+                        {
+                            newTemperature += energyTransfer * 0.5f / airSpecificHeat;
+                        }
+                        // The neighbor's temperature will be updated by its own job index
+                    }
+                }
+                else
+                {
+                    // Interaction with the structural heat container (simplified for now)
+                    float structureTemp = structuralTemperature[0];
+                    float tempDifference = math.abs(currentTemp - structureTemp);
+
+                    if (tempDifference > diffusionThreshold)
+                    {
+                        float heatTransfer = diffusionRate * tempDifference;
+                        float airEnergyTransfer = heatTransfer * airSpecificHeat;
+
+                        if (currentTemp > structureTemp)
+                        {
+                            newTemperature -= airEnergyTransfer * 0.5f / airSpecificHeat;
+                            // Structural heat needs proper handling outside the parallel loop
+                        }
+                        else
+                        {
+                            newTemperature += airEnergyTransfer * 0.5f / airSpecificHeat;
+                            // Structural heat needs proper handling outside the parallel loop
+                        }
+                    }
+                }
+            }
+            nextTemperatureGrid[index] = newTemperature; // Write the result for the current cell to output
+        }
+    }
+
     [SerializeField] private BoxCollider airCollider;
     [SerializeField] private bool drawDebug = false;
     public GameObject debugPos;
@@ -11,22 +100,24 @@ public class AirGrid : MonoBehaviour
 
     private Vector3Int gridDimensions;
     private Vector3 origin;
-    public float[,,] temperatureGrid;
+    // public float[,,] temperatureGrid;
     int[] dx = { 1, -1, 0, 0, 0, 0 };
     int[] dy = { 0, 0, 1, -1, 0, 0 };
     int[] dz = { 0, 0, 0, 0, 1, -1 };
     private Queue<Vector3Int> modifiedCubes = new Queue<Vector3Int>();
     private HashSet<Vector3Int> modifiedCubesSet = new HashSet<Vector3Int>(); // For faster Contains checks
+    private NativeArray<float> nextTemperatureData; // For reading the previous state
     private int diffusionStepCounter = 0;
     private int diffusionInterval;
     [SerializeField] private int cubesToProcessPerFrame = 20; // Adjust this value
-    public float diffusionRate = 10;
+    public float diffusionRate = 10000;
     public float diffusionThreshold = 0.1f;
     public HeatMaterialScriptableObject heatMaterial;
-
     public HeatMaterialScriptableObject structuralHeatMaterial;
 
     private HeatContainer structuralHeatContainer;
+    private NativeArray<float> temperatureData;
+    private int3 gridDims; // Use int3 for easier calculations in jobs
 
     void Start()
     {
@@ -39,7 +130,53 @@ public class AirGrid : MonoBehaviour
         if (diffusionStepCounter >= diffusionInterval)
         {
             diffusionStepCounter = 0;
-            PerformDiffusionStep();
+            ScheduleDiffusionJob();
+        }
+    }
+
+    void ScheduleDiffusionJob()
+    {
+        NativeArray<float> results = new NativeArray<float>(temperatureData, Allocator.TempJob);
+
+        DiffusionJob diffusionJob = new DiffusionJob
+        {
+            currentTemperatureGrid = temperatureData, // Input - Current temperature data
+            nextTemperatureGrid = results,        // Output - Results of the diffusion step
+            gridDimensions = gridDims,
+            diffusionRate = diffusionRate,
+            diffusionThreshold = diffusionThreshold,
+            structuralTemperature = new NativeArray<float>(new float[] { structuralHeatContainer.currentTemperature }, Allocator.TempJob),
+            structuralSpecificHeat = structuralHeatContainer.specificHeatCapacity,
+            airSpecificHeat = heatMaterial.specificHeatCapacity,
+            deltaTime = Time.fixedDeltaTime
+        };
+
+        JobHandle jobHandle = diffusionJob.Schedule(temperatureData.Length, 64);
+        jobHandle.Complete();
+
+        // Copy the results back to temperatureData
+        temperatureData.CopyFrom(results);
+        results.Dispose();
+
+        // Update nextTemperatureData for the next frame's input (if you are still using it elsewhere)
+        nextTemperatureData.CopyFrom(temperatureData);
+
+        diffusionInterval = UnityEngine.Random.Range(5, 10);
+        modifiedCubes.Clear();
+        modifiedCubesSet.Clear();
+
+        diffusionJob.structuralTemperature.Dispose();
+    }
+
+    void OnDestroy()
+    {
+        if (temperatureData.IsCreated)
+        {
+            temperatureData.Dispose();
+        }
+        if (nextTemperatureData.IsCreated)
+        {
+            nextTemperatureData.Dispose();
         }
     }
 
@@ -50,7 +187,6 @@ public class AirGrid : MonoBehaviour
             Debug.LogError("AirGridInitializer: No BoxCollider assigned.");
             return;
         }
-
         // Step 1: Get the world size
         Vector3 worldSize = Vector3.Scale(airCollider.size, airCollider.transform.lossyScale);
 
@@ -65,18 +201,23 @@ public class AirGrid : MonoBehaviour
         Vector3 localMinCorner = airCollider.center - airCollider.size * 0.5f;
         origin = airCollider.transform.TransformPoint(localMinCorner);
 
-        // Step 4: Allocate the grid
-        temperatureGrid = new float[gridDimensions.x, gridDimensions.y, gridDimensions.z];
+        gridDims = new int3(gridDimensions.x, gridDimensions.y, gridDimensions.z);
+        temperatureData = new NativeArray<float>(gridDimensions.x * gridDimensions.y * gridDimensions.z, Allocator.Persistent);
+        nextTemperatureData = new NativeArray<float>(gridDimensions.x * gridDimensions.y * gridDimensions.z, Allocator.Persistent);
 
-        // Step 5: Initialize temperature values (e.g. ambient temp)
         float ambientTemperature = startingTemp;
         for (int x = 0; x < gridDimensions.x; x++)
             for (int y = 0; y < gridDimensions.y; y++)
                 for (int z = 0; z < gridDimensions.z; z++)
                 {
-                    temperatureGrid[x, y, z] = ambientTemperature;
+                    int index = CalculateIndex(new int3(x, y, z));
+                    temperatureData[index] = ambientTemperature;
+                    nextTemperatureData[index] = ambientTemperature;
                 }
 
+
+
+        nextTemperatureData = new NativeArray<float>(temperatureData, Allocator.Persistent);
         createStruturalHeatContainer();
         Debug.Log($"Air grid initialized: {gridDimensions.x} x {gridDimensions.y} x {gridDimensions.z}");
     }
@@ -159,10 +300,32 @@ public class AirGrid : MonoBehaviour
         return collidingCubes;
     }
 
+    private int CalculateIndex(int3 position)
+    {
+        return position.x + gridDims.x * (position.y + gridDims.y * position.z);
+    }
+
     public float GetTemperature(int x, int y, int z)
     {
-        return temperatureGrid[x, y, z];
+        return temperatureData[CalculateIndex(new int3(x, y, z))];
     }
+
+    // Helper to get temperature from NativeArray in jobs
+    private float GetTemperature(NativeArray<float> grid, int3 pos, int3 dimensions)
+    {
+        return grid[pos.x + dimensions.x * (pos.y + dimensions.y * pos.z)];
+    }
+
+    // Helper to set temperature in NativeArray in jobs
+    private void SetTemperature(NativeArray<float> grid, int3 pos, int3 dimensions, float temp)
+    {
+        grid[pos.x + dimensions.x * (pos.y + dimensions.y * pos.z)] = temp;
+    }
+
+    // public float GetTemperature(int x, int y, int z)
+    // {
+    //     return temperatureGrid[x, y, z];
+    // }
 
     void IncreaseHeat(int x, int y, int z, float amount)
     {
@@ -175,7 +338,8 @@ public class AirGrid : MonoBehaviour
         ReturnToPool(modifiedVoxel);
 
         float temperatureChange = amount / (1 * heatMaterial.specificHeatCapacity);
-        temperatureGrid[x, y, z] += temperatureChange;
+        int index = CalculateIndex(new int3(x, y, z));
+        temperatureData[index] += temperatureChange; // Update NativeArray
     }
 
     public void ApplyNewtonsLawOfCooling(HeatContainer otherContainer, int numCubes, int x, int y, int z)
@@ -257,7 +421,7 @@ public class AirGrid : MonoBehaviour
 
                 // Ensure temperatures remain within realistic bounds
                 //otherContainer.currentTemperature = Mathf.Max(otherContainer.currentTemperature, otherContainer.ambientTemperature);  // Prevent Mechs from cooling below ambient unless overheated
-                temperatureGrid[x, y, z] = Mathf.Max(GetTemperature(x, y, z), 0);  // Prevent Air from going below 0 (or any desired minimum)
+                //temperatureGrid[x, y, z] = Mathf.Max(GetTemperature(x, y, z), 0);  // Prevent Air from going below 0 (or any desired minimum)
             }
         }
 
@@ -270,7 +434,7 @@ public class AirGrid : MonoBehaviour
 
     public void PerformDiffusionStep()
     {
-        diffusionStepCounter = Random.Range(5, 10);
+        diffusionStepCounter = UnityEngine.Random.Range(5, 10);
         Queue<Vector3Int> cubesToDiffuseNext = new Queue<Vector3Int>();
         HashSet<Vector3Int> nextCubesSet = new HashSet<Vector3Int>(); // To avoid duplicates in the next step
 
@@ -303,13 +467,13 @@ public class AirGrid : MonoBehaviour
                         // Transfer heat (simplified - you might want to consider specific heat)
                         if (currentTemp > neighborTemp)
                         {
-                            temperatureGrid[x, y, z] -= heatTransfer * 0.5f;
-                            temperatureGrid[nx, ny, nz] += heatTransfer * 0.5f;
+                            //temperatureGrid[x, y, z] -= heatTransfer * 0.5f;
+                            //temperatureGrid[nx, ny, nz] += heatTransfer * 0.5f;
                         }
                         else
                         {
-                            temperatureGrid[x, y, z] += heatTransfer * 0.5f;
-                            temperatureGrid[nx, ny, nz] -= heatTransfer * 0.5f;
+                            //temperatureGrid[x, y, z] += heatTransfer * 0.5f;
+                            //temperatureGrid[nx, ny, nz] -= heatTransfer * 0.5f;
                         }
 
                         Vector3Int neighborVoxel = GetPooledVector3Int(nx, ny, nz);
@@ -333,12 +497,12 @@ public class AirGrid : MonoBehaviour
                         // Transfer heat (simplified - you might want to consider specific heat)
                         if (currentTemp > structureTemp)
                         {
-                            temperatureGrid[x, y, z] -= heatTransfer * 0.5f;
+                            //temperatureGrid[x, y, z] -= heatTransfer * 0.5f;
                             structuralHeatContainer.IncreaseHeat(this, heatTransfer * 0.5f);
                         }
                         else
                         {
-                            temperatureGrid[x, y, z] += heatTransfer * 0.5f;
+                            //temperatureGrid[x, y, z] += heatTransfer * 0.5f;
                             structuralHeatContainer.IncreaseHeat(this, -heatTransfer * 0.5f);
                         }
 
@@ -379,15 +543,21 @@ public class AirGrid : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        if (!drawDebug || temperatureGrid == null) return;
+        if (!drawDebug || !temperatureData.IsCreated) return; // Check if NativeArray is initialized
 
-        Gizmos.color = new Color(0f, 0.5f, 1f, 0.1f);
-        for (int x = 0; x < gridDimensions.x; x++)
-            for (int y = 0; y < gridDimensions.y; y++)
-                for (int z = 0; z < gridDimensions.z; z++)
+        for (int x = 0; x < gridDims.x; x++)
+            for (int y = 0; y < gridDims.y; y++)
+                for (int z = 0; z < gridDims.z; z++)
                 {
+                    int index = CalculateIndex(new int3(x, y, z));
+                    float temperature = temperatureData[index];
                     Vector3 worldPos = origin + new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
-                    Gizmos.color = new Color(1f * (temperatureGrid[x, y, z] / 100), 0f, 1f / (temperatureGrid[x, y, z] / 100), 0.5f * temperatureGrid[x, y, z] / 200);
+
+                    // Adjust color mapping for better visualization
+                    float normalizedTemp = Mathf.Clamp01((temperature - 0f) / 100f); // Normalize to a 0-1 range (adjust 100f as needed)
+                    Color color = Color.Lerp(Color.blue, Color.red, normalizedTemp); // Blue for cold, red for hot
+                    color.a = 0.1f; // Set alpha for transparency
+                    Gizmos.color = color;
                     Gizmos.DrawCube(worldPos, Vector3.one);
                 }
 

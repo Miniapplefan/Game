@@ -26,19 +26,25 @@ public class CooldownAction : ActionBase<CommonData>, IInjectable
 		// {
 		// 	return ActionRunState.Continue;
 		// }
-		if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
-		{
-			float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
-			if (distanceToPlayer < 6.0f)
-			{
-				return ActionRunState.Stop;
-			}
-		}
+		// if (Physics.OverlapSphereNonAlloc(agent.transform.position, AttackConfig.SensorRadius, Colliders, AttackConfig.AttackableLayerMask) > 0)
+		// {
+		// 	float distanceToPlayer = Vector3.Distance(agent.transform.position, Colliders[0].transform.position);
+		// 	if (distanceToPlayer < 6.0f)
+		// 	{
+		// 		return ActionRunState.Stop;
+		// 	}
+		// }
 
 		//Determine if there is a water pool that is cooler than us
 
 		// Assuming no water pool, see if our temperature is above that of the air
-		if (data.bodyState.heatContainer.GetTemperatureRelativeToAir() > 1)
+		// if (data.bodyState.heatContainer.GetTemperatureRelativeToAir() > 1)
+		// {
+		// 	//Debug.Log("Airing");
+		// 	return ActionRunState.Continue;
+		// }
+
+		if (data.bodyState.heatContainer.GetAirTemperature() / data.bodyState.cooling.GetMaxHeat() > 0.3f)
 		{
 			//Debug.Log("Airing");
 			return ActionRunState.Continue;

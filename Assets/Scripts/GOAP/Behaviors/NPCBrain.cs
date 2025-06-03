@@ -19,6 +19,7 @@ public class NPCBrain : MonoBehaviour
 	public float ConsiderCooldownVal;
 	public float ConsiderOverheatTargetVal;
 	public float ConsiderDeploySiphonVal;
+	public float ConsiderDefendSiphonVal;
 	public float ConsiderTakeCoverVal;
 
 
@@ -45,6 +46,7 @@ public class NPCBrain : MonoBehaviour
 		ConsiderCooldownVal = ConsiderCooldownGoal();
 		ConsiderOverheatTargetVal = ConsiderOverheatTargetGoal();
 		ConsiderDeploySiphonVal = ConsiderDeploySiphonGoal();
+		ConsiderDefendSiphonVal = ConsiderDefendSiphonGoal();
 		ConsiderTakeCoverVal = ConsiderTakeCoverGoal();
 
 		if (bodyState.targetBodyState != null && bodyState.targetBodyState.Cooling_IsOverheated())
@@ -101,10 +103,10 @@ public class NPCBrain : MonoBehaviour
 					currentGoalInertia = Mathf.Clamp(chosenGoal.Consideration(), 0, maxInertia);
 					break;
 				default:
-					Debug.Log("AI Defaulting");
 					AgentBehaviour.SetGoal<TakeCoverGoal>(chosenGoal.cancelable);
 					break;
 			}
+			//DebugLogGoal(chosenGoal.goal);
 		}
 		//}
 		currentGoalInertia -= Time.deltaTime;
@@ -153,8 +155,8 @@ public class NPCBrain : MonoBehaviour
 
 		return FormatConsiderationVal(
 		LegsSystemActiveConsideration() *
-		AirTemperatureConsideration() *
-		PositiveHeatConsideration(0.1f)
+		// AirTemperatureConsideration() *
+		PositiveHeatConsideration(0.7f)
 		// * FarFromTargetConsideration()
 		);
 		//* weaponsChargedConsideration
@@ -222,8 +224,8 @@ public class NPCBrain : MonoBehaviour
 		}
 		return FormatConsiderationVal(
 				NegativeHeatConsideration() *
-				DeployedSiphonConsideration(1.70f, 0f) *
-				CloseToSiphonConsideration() *
+				DeployedSiphonConsideration(1.0f, 0f) *
+				// CloseToSiphonConsideration() *
 				TargetIsNotFiring()
 				* SiphonAmountLeftConsideration()
 				);
@@ -269,6 +271,8 @@ public class NPCBrain : MonoBehaviour
 		float maxHeat = bodyState.cooling.GetMaxHeat();
 		float ambientTemperature = Mathf.Clamp(bodyState.heatContainer.GetAirTemperature(), 0, maxHeat);
 
+		/*
+
 		// Handle the case where ambientTemperature is equal to maxHeat
 		if (Mathf.Approximately(ambientTemperature, maxHeat))
 		{
@@ -280,6 +284,11 @@ public class NPCBrain : MonoBehaviour
 		float normalizedHeat = (currentHeat - ambientTemperature) / (maxHeat - ambientTemperature);
 
 		return -(Mathf.Pow(normalizedHeat, 3)) + 1;
+		
+		*/
+
+		return Mathf.Clamp(Mathf.Pow(currentHeat / maxHeat, -0.9f), 0, 1);
+
 	}
 
 	/// <summary>
@@ -292,24 +301,29 @@ public class NPCBrain : MonoBehaviour
 		float maxHeat = bodyState.cooling.GetMaxHeat();
 		float ambientTemperature = Mathf.Clamp(bodyState.heatContainer.GetAirTemperature(), 0, maxHeat);
 
-		// Handle the case where ambientTemperature is equal to maxHeat
-		if (Mathf.Approximately(ambientTemperature, maxHeat))
-		{
-			// If ambient temperature is at max heat, the normalized heat should be 0 (since currentHeat cannot be less than ambientTemperature)
-			return 0; // Return 0 since there is no heat above ambient temperature
-		}
+		/*
+				// Handle the case where ambientTemperature is equal to maxHeat
+				if (Mathf.Approximately(ambientTemperature, maxHeat))
+				{
+					// If ambient temperature is at max heat, the normalized heat should be 0 (since currentHeat cannot be less than ambientTemperature)
+					return 0; // Return 0 since there is no heat above ambient temperature
+				}
 
-		// Ensure we are not trying to cool below the ambient temperature
-		float normalizedHeat = (currentHeat - ambientTemperature) / (maxHeat - ambientTemperature);
+				// Ensure we are not trying to cool below the ambient temperature
+				float normalizedHeat = (currentHeat - ambientTemperature) / (maxHeat - ambientTemperature);
 
-		if (normalizedHeat > threshold)
-		{
-			return Mathf.Pow(normalizedHeat + 0.3f, 3);
-		}
-		else
-		{
-			return 0;
-		}
+				if (normalizedHeat > threshold)
+				{
+					return Mathf.Pow(normalizedHeat + 0.3f, 3);
+				}
+				else
+				{
+					return 0;
+				}
+				*/
+
+		return Mathf.Pow(currentHeat / maxHeat, threshold);
+
 	}
 
 	private float AirTemperatureConsideration()
@@ -354,7 +368,7 @@ public class NPCBrain : MonoBehaviour
 		if (bodyState.targetBodyState != null)
 		{
 			//Debug.Log(Mathf.Pow((bodyState.targetBodyState.HeatContainer_getCurrentHeat() - bodyState.heatContainer.GetAirTemperature()) / (bodyState.targetBodyState.cooling.GetMaxHeat() - bodyState.heatContainer.GetAirTemperature()), 8));
-			return Mathf.Pow((bodyState.targetBodyState.HeatContainer_getCurrentHeat() - bodyState.heatContainer.GetAirTemperature()) / (bodyState.targetBodyState.cooling.GetMaxHeat() - bodyState.heatContainer.GetAirTemperature()), exp);
+			return Mathf.Pow((bodyState.targetBodyState.HeatContainer_getCurrentHeat()) / (bodyState.targetBodyState.cooling.GetMaxHeat()), exp);
 		}
 		else
 		{
@@ -436,7 +450,7 @@ public class NPCBrain : MonoBehaviour
 	{
 		if (bodyState.targetBodyState != null && bodyState.siphonTarget != null)
 		{
-			return Vector3.Distance(bodyState.targetBodyState.gameObject.transform.position, bodyState.siphonTarget.gameObject.transform.position) / bodyState.siphon.getMaxSiphonDistance();
+			return FormatConsiderationVal(Vector3.Distance(bodyState.targetBodyState.gameObject.transform.position, bodyState.siphonTarget.gameObject.transform.position) / bodyState.siphon.getMaxSiphonDistance());
 		}
 		else
 		{
@@ -448,7 +462,7 @@ public class NPCBrain : MonoBehaviour
 	{
 		if (bodyState.siphon.siphonTarget != null)
 		{
-			return 10 / Vector3.Distance(bodyState.gameObject.transform.position, bodyState.siphonTarget.gameObject.transform.position) * 2;
+			return FormatConsiderationVal(10 / Vector3.Distance(bodyState.gameObject.transform.position, bodyState.siphonTarget.gameObject.transform.position) * 2);
 		}
 		else
 		{
@@ -510,4 +524,29 @@ public class NPCBrain : MonoBehaviour
 	}
 
 	#endregion
+
+	void DebugLogGoal(GoalBase goal)
+	{
+		switch (goal)
+		{
+			case OverheatHostileGoal:
+				Debug.Log("Attacking");
+				break;
+			case TakeCoverGoal:
+				Debug.Log("Taking Cover");
+				break;
+			case DeploySiphonGoal:
+				Debug.Log("Deploying Siphon");
+				break;
+			case DefendSiphonGoal:
+				Debug.Log("Defending Siphon");
+				break;
+			case CooldownGoal:
+				Debug.Log("Cooling Down");
+				break;
+			default:
+				Debug.Log("Defaulting");
+				break;
+		}
+	}
 }

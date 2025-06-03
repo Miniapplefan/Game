@@ -486,6 +486,12 @@ public class HeatContainer : MonoBehaviour
 
 	public float GetAirTemperature()
 	{
+		return ambientTemperature;
+	}
+
+	//Old GetAirTemperature that the AI used
+	public float GetAirTemperatureLegacy()
+	{
 		return currentAir != null ? currentAir.GetTemperature() : GetTemperature();
 	}
 
